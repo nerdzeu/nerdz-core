@@ -15,20 +15,20 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nerdz_test
+package db_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/mcilloni/nerdz-core/nerdz"
+	"github.com/mcilloni/nerdz-core/db"
 )
 
-var prj *nerdz.Project
+var prj *db.Project
 var err error
 
 func init() {
-	prj, err = nerdz.NewProject(1)
+	prj, err = db.NewProject(1)
 	if err != nil {
 		panic(fmt.Sprintf("No error should happen when create existing user, but got: %+v", err))
 	}
@@ -53,7 +53,7 @@ func TestProjectInfo(t *testing.T) {
 }
 
 func TestProjectPostlist(t *testing.T) {
-	postList := *prj.Postlist(nerdz.PostlistOptions{})
+	postList := *prj.Postlist(db.PostlistOptions{})
 	if len(postList) != 4 {
 		t.Fatalf("Expected 4  posts, but got: %+v\n", len(postList))
 	}

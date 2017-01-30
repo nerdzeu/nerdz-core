@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nerdz
+package db
 
 import (
 	"net/mail"
@@ -39,25 +39,6 @@ type PersonalInfo struct {
 	Biography string
 }
 
-// GetTO returns its Transfer Object
-func (p *PersonalInfo) GetTO() *PersonalInfoTO {
-	return &PersonalInfoTO{
-		original:  p,
-		IsOnline:  p.IsOnline,
-		Nation:    p.Nation,
-		Timezone:  p.Timezone,
-		Username:  p.Username,
-		Name:      p.Name,
-		Surname:   p.Surname,
-		Gender:    p.Gender,
-		Birthday:  p.Birthday,
-		Gravatar:  p.Gravatar.String(),
-		Interests: p.Interests,
-		Quotes:    p.Quotes,
-		Biography: p.Biography,
-	}
-}
-
 // ContactInfo is the struct that contains all the contact info of an user
 type ContactInfo struct {
 	Website  *url.URL
@@ -68,37 +49,6 @@ type ContactInfo struct {
 	Facebook *url.URL
 	Twitter  *url.URL
 	Steam    string
-}
-
-// GetTO returns its Transfer Object
-func (c *ContactInfo) GetTO() *ContactInfoTO {
-	var yahoo, facebook, twitter, github, website string
-	if c.Website != nil {
-		website = c.Website.String()
-	}
-	if c.GitHub != nil {
-		github = c.GitHub.String()
-	}
-	if c.Yahoo != nil {
-		yahoo = c.Yahoo.String()
-	}
-	if c.Facebook != nil {
-		facebook = c.Facebook.String()
-	}
-	if c.Twitter != nil {
-		twitter = c.Twitter.String()
-	}
-	return &ContactInfoTO{
-		original: c,
-		Website:  website,
-		GitHub:   github,
-		Skype:    c.Skype,
-		Jabber:   c.Jabber,
-		Yahoo:    yahoo,
-		Facebook: facebook,
-		Twitter:  twitter,
-		Steam:    c.Steam,
-	}
 }
 
 // Template is the representation of a nerdz website template
@@ -131,31 +81,4 @@ type Info struct {
 	Closed      bool
 	Type        boardType
 	BoardString string
-}
-
-// GetTO returns its Transfer Object
-func (i *Info) GetTO() *InfoTO {
-	var owner *InfoTO
-	if i.Owner != nil {
-		owner = i.Owner.GetTO()
-	}
-	var website, image string
-	if i.Image != nil {
-		image = i.Image.String()
-	}
-	if i.Website != nil {
-		website = i.Website.String()
-	}
-	return &InfoTO{
-		original:    i,
-		ID:          i.ID,
-		Owner:       owner,
-		Name:        i.Name,
-		Username:    i.Username,
-		Website:     website,
-		Image:       image,
-		Closed:      i.Closed,
-		Type:        i.Type,
-		BoardString: i.BoardString,
-	}
 }

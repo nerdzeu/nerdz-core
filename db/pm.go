@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nerdz
+package db
 
 import (
 	"errors"
@@ -59,24 +59,6 @@ type Conversation struct {
 	LastMessage string
 	Time        time.Time
 	ToRead      bool
-}
-
-// GetTO returns is Transfer Object
-func (c *Conversation) GetTO(users ...*User) *ConversationTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(c.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(c.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ConversationTO{
-		FromInfo:    fromInfo,
-		ToInfo:      toInfo,
-		LastMessage: c.LastMessage,
-		Time:        c.Time,
-		ToRead:      c.ToRead,
-	}
 }
 
 // NewPm initializes a Pm struct

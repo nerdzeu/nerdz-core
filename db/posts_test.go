@@ -15,30 +15,30 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nerdz_test
+package db_test
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/mcilloni/nerdz-core/nerdz"
+	"github.com/mcilloni/nerdz-core/db"
 )
 
-var userPost, userPost1 *nerdz.UserPost
-var projectPost *nerdz.ProjectPost
+var userPost, userPost1 *db.UserPost
+var projectPost *db.ProjectPost
 var e error
 
 func init() {
-	if projectPost, e = nerdz.NewProjectPost(uint64(3)); e != nil {
+	if projectPost, e = db.NewProjectPost(uint64(3)); e != nil {
 		panic(fmt.Sprintf("No error should happen when create existing post, but got: %+v", e))
 	}
 
-	if userPost, e = nerdz.NewUserPost(6); e != nil {
+	if userPost, e = db.NewUserPost(6); e != nil {
 		panic(fmt.Sprintf("No error should happen when create existing post, but got: %+v", e))
 	}
 
-	userPost1, _ = nerdz.NewUserPost(20)
+	userPost1, _ = db.NewUserPost(20)
 }
 
 func TestFrom(t *testing.T) {
@@ -60,7 +60,7 @@ func TestFrom(t *testing.T) {
 func TestTo(t *testing.T) {
 	to := userPost.Reference()
 
-	user := to.(*nerdz.User)
+	user := to.(*db.User)
 
 	if user.Counter != 1 {
 		t.Fatalf("Counter should be 1, but go: %d", user.Counter)
@@ -68,7 +68,7 @@ func TestTo(t *testing.T) {
 
 	to = projectPost.Reference()
 
-	project := to.(*nerdz.Project)
+	project := to.(*db.Project)
 
 	if project.Counter != 3 {
 		t.Fatalf("Counter should be 3, but go: %d", project.Counter)
@@ -78,17 +78,17 @@ func TestTo(t *testing.T) {
 }
 
 func TestComments(t *testing.T) {
-	comments := *userPost.Comments(nerdz.CommentlistOptions{})
+	comments := *userPost.Comments(db.CommentlistOptions{})
 	if len(comments) == 0 {
 		t.Error("No comments found. Expected > 1")
 	}
 
-	comments = *userPost.Comments(nerdz.CommentlistOptions{N: 4})
+	comments = *userPost.Comments(db.CommentlistOptions{N: 4})
 	if len(comments) != 4 {
 		t.Fatalf("Expected the last 4 comments, got: %d", len(comments))
 	}
 
-	comments = *userPost.Comments(nerdz.CommentlistOptions{
+	comments = *userPost.Comments(db.CommentlistOptions{
 		// Comments are fetched in inversed temporal order
 		Older: comments[0].ID(),
 		Newer: comments[3].ID() - 1,
@@ -98,18 +98,18 @@ func TestComments(t *testing.T) {
 	}
 	t.Logf("%+v\n", comments)
 
-	prjComments := *projectPost.Comments(nerdz.CommentlistOptions{})
+	prjComments := *projectPost.Comments(db.CommentlistOptions{})
 	if len(prjComments) == 0 {
 		t.Error("No comments found. Expected > 1")
 	}
 
-	prjComments = *projectPost.Comments(nerdz.CommentlistOptions{N: 4})
+	prjComments = *projectPost.Comments(db.CommentlistOptions{N: 4})
 	if len(prjComments) != 1 {
 		t.Fatalf("Expected the last  comment, got: %d", len(prjComments))
 	}
 	t.Logf("%+v\n", prjComments)
 
-	prjComments = *projectPost.Comments(nerdz.CommentlistOptions{Newer: 100})
+	prjComments = *projectPost.Comments(db.CommentlistOptions{Newer: 100})
 	if len(prjComments) != 0 {
 		t.Fatalf("Expected no comment, received: %d", len(prjComments))
 	}

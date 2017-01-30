@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nerdz
+package db
 
 import (
 	"database/sql"
@@ -38,18 +38,6 @@ const (
 	ProjectBoardID boardType = "project"
 )
 
-// Transferable represents a common interface for all the
-// types defined by the backend that are able to generate
-// a data structure that can be returned by the API
-type Transferable interface {
-	// GetTO returns a proper data structure for the API
-	// users (max len 1) is the current user viewing the API (the one who grants
-	// the proprer access to the client application)
-	// Is optional because not all the TO are different (ore have different content)
-	// if the user is a specific user
-	GetTO(users ...*User) interface{}
-}
-
 // Models
 
 // UserPostLock is the model for the relation posts_no_notify
@@ -58,22 +46,6 @@ type UserPostLock struct {
 	Hpid    uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (u *UserPostLock) GetTO(users ...*User) *UserPostLockTO {
-	var userInfo *InfoTO
-	if user, e := NewUser(u.User); e == nil {
-		userInfo = user.Info().GetTO()
-	}
-	return &UserPostLockTO{
-		original:  u,
-		User:      userInfo,
-		Hpid:      u.Hpid,
-		Time:      u.Time,
-		Timestamp: u.Time.Unix(),
-		Counter:   u.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -95,26 +67,6 @@ func (UserPostUserLock) TableName() string {
 	return "comments_no_notify"
 }
 
-// GetTO returns its Transfer Object
-func (u *UserPostUserLock) GetTO(users ...*User) *UserPostUserLockTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(u.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(u.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &UserPostUserLockTO{
-		original:  u,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Hpid:      u.Hpid,
-		Time:      u.Time,
-		Timestamp: u.Time.Unix(),
-		Counter:   u.Counter,
-	}
-}
-
 // UserPostCommentsNotify is the model for the relation comments_notify
 type UserPostCommentsNotify struct {
 	From    uint64
@@ -122,26 +74,6 @@ type UserPostCommentsNotify struct {
 	Hpid    uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (u *UserPostCommentsNotify) GetTO(users ...*User) *UserPostCommentsNotifyTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(u.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(u.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &UserPostCommentsNotifyTO{
-		original:  u,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Hpid:      u.Hpid,
-		Time:      u.Time,
-		Timestamp: u.Time.Unix(),
-		Counter:   u.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -155,22 +87,6 @@ type Ban struct {
 	Motivation string
 	Time       time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter    uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (b *Ban) GetTO(users ...*User) *BanTO {
-	var userInfo *InfoTO
-	if user, e := NewUser(b.User); e == nil {
-		userInfo = user.Info().GetTO()
-	}
-	return &BanTO{
-		original:   b,
-		User:       userInfo,
-		Motivation: b.Motivation,
-		Time:       b.Time,
-		Timestamp:  b.Time.Unix(),
-		Counter:    b.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -187,26 +103,6 @@ type Blacklist struct {
 	Counter    uint64    `igor:"primary_key"`
 }
 
-// GetTO returns its Transfer Object
-func (b *Blacklist) GetTO(users ...*User) *BlacklistTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(b.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(b.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &BlacklistTO{
-		original:   b,
-		FromInfo:   fromInfo,
-		ToInfo:     toInfo,
-		Motivation: b.Motivation,
-		Time:       b.Time,
-		Timestamp:  b.Time.Unix(),
-		Counter:    b.Counter,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (Blacklist) TableName() string {
 	return "blacklist"
@@ -218,25 +114,6 @@ type Whitelist struct {
 	To      uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (w *Whitelist) GetTO(users ...*User) *WhitelistTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(w.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(w.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &WhitelistTO{
-		original:  w,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      w.Time,
-		Timestamp: w.Time.Unix(),
-		Counter:   w.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -258,26 +135,6 @@ func (UserFollower) TableName() string {
 	return "followers"
 }
 
-// GetTO returns its Transfer Object
-func (u *UserFollower) GetTO(users ...*User) *UserFollowerTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(u.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(u.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &UserFollowerTO{
-		original:  u,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      u.Time,
-		Timestamp: u.Time.Unix(),
-		ToNotify:  u.ToNotify,
-		Counter:   u.Counter,
-	}
-}
-
 // ProjectNotify is the model for the relation groups_notify
 type ProjectNotify struct {
 	From    uint64
@@ -292,48 +149,12 @@ func (ProjectNotify) TableName() string {
 	return "groups_notify"
 }
 
-// GetTO returns its Transfer Object
-func (p *ProjectNotify) GetTO(users ...*User) *ProjectNotifyTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewProject(p.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(p.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectNotifyTO{
-		original:  p,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		Hpid:      p.Hpid,
-		Counter:   p.Counter,
-	}
-}
-
 // ProjectPostLock is the model for the relation groups_posts_no_notify
 type ProjectPostLock struct {
 	User    uint64
 	Hpid    uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (p *ProjectPostLock) GetTO(users ...*User) *ProjectPostLockTO {
-	var userInfo *InfoTO
-	if user, e := NewUser(p.User); e == nil {
-		userInfo = user.Info().GetTO()
-	}
-	return &ProjectPostLockTO{
-		original:  p,
-		User:      userInfo,
-		Hpid:      p.Hpid,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		Counter:   p.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -350,26 +171,6 @@ type ProjectPostUserLock struct {
 	Counter uint64    `igor:"primary_key"`
 }
 
-// GetTO returns its Transfer Object
-func (p *ProjectPostUserLock) GetTO(users ...*User) *ProjectPostUserLockTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(p.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(p.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectPostUserLockTO{
-		original:  p,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Hpid:      p.Hpid,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		Counter:   p.Counter,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (ProjectPostUserLock) TableName() string {
 	return "groups_comments_no_notify"
@@ -382,26 +183,6 @@ type ProjectPostCommentsNotify struct {
 	Hpid    uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (p *ProjectPostCommentsNotify) GetTO(users ...*User) *ProjectPostCommentsNotifyTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(p.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(p.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectPostCommentsNotifyTO{
-		original:  p,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Hpid:      p.Hpid,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		Counter:   p.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -436,48 +217,6 @@ type User struct {
 // TableName returns the table name associated with the structure
 func (User) TableName() string {
 	return "users"
-}
-
-// GetTO returns its Transfer Object: *User GetTO embeds *Profile GetTO
-func (u *User) GetTO(users ...*User) *UserTO {
-	return &UserTO{
-		original:         u,
-		Counter:          u.Counter,
-		Last:             u.Last,
-		NotifyStory:      u.NotifyStory,
-		Private:          u.Private,
-		Lang:             u.Lang,
-		Username:         u.Username,
-		Name:             u.Name,
-		Surname:          u.Surname,
-		Gender:           u.Gender,
-		BirthDate:        u.BirthDate,
-		BoardLang:        u.BoardLang,
-		Timezone:         u.Timezone,
-		Viewonline:       u.Viewonline,
-		RegistrationTime: u.RegistrationTime,
-		Profile: ProfileTO{
-			Counter:        u.Profile.Counter,
-			Website:        u.Profile.Website,
-			Quotes:         strings.Split(u.Profile.Quotes, "\n"),
-			Biography:      u.Profile.Biography,
-			Interests:      u.Interests(),
-			Github:         u.Profile.Github,
-			Skype:          u.Profile.Skype,
-			Jabber:         u.Profile.Jabber,
-			Yahoo:          u.Profile.Yahoo,
-			Userscript:     u.Profile.Userscript,
-			Template:       u.Profile.Template,
-			MobileTemplate: u.Profile.MobileTemplate,
-			Dateformat:     u.Profile.Dateformat,
-			Facebook:       u.Profile.Facebook,
-			Twitter:        u.Profile.Twitter,
-			Steam:          u.Profile.Steam,
-			Push:           u.Profile.Push,
-			Pushregtime:    u.Profile.Pushregtime,
-			Closed:         u.Profile.Closed,
-		},
-	}
 }
 
 // Profile is the model for the relation profiles
@@ -544,21 +283,6 @@ func (p *Post) UserPost() *UserPost {
 func (p *Post) ProjectPost() *ProjectPost {
 	return &ProjectPost{
 		Post: *p,
-	}
-}
-
-// GetTO returns its Transfer Object
-func (p *Post) GetTO(users ...*User) *PostTO {
-	return &PostTO{
-		original:  p,
-		Hpid:      p.Hpid,
-		Pid:       p.Pid,
-		Message:   p.Message,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		Lang:      p.Lang,
-		News:      p.News,
-		Closed:    p.Closed,
 	}
 }
 

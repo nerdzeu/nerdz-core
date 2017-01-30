@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nerdz_test
+package db_test
 
 import (
 	"fmt"
@@ -23,42 +23,42 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mcilloni/nerdz-core/nerdz"
+	"github.com/mcilloni/nerdz-core/db"
 )
 
-var me, other, blacklisted, withClosedProfile *nerdz.User
+var me, other, blacklisted, withClosedProfile *db.User
 
 func init() {
 	var err error
 
-	me, err = nerdz.NewUser(1)
+	me, err = db.NewUser(1)
 	if err != nil {
 		panic(fmt.Sprintf("No error should happen when create existing user, but got: %+v", err))
 	}
 
-	other, err = nerdz.NewUser(2)
+	other, err = db.NewUser(2)
 	if err != nil {
 		panic(fmt.Sprintf("No error should happen when create existing user, but got: %+v", err))
 	}
 
-	blacklisted, _ = nerdz.NewUser(5)
-	withClosedProfile, _ = nerdz.NewUser(7)
+	blacklisted, _ = db.NewUser(5)
+	withClosedProfile, _ = db.NewUser(7)
 }
 
 func TestLogin(t *testing.T) {
-	if _, e := nerdz.Login("1", "adminadmin"); e != nil {
+	if _, e := db.Login("1", "adminadmin"); e != nil {
 		t.Fatalf("Login using ID and password shold work but got: %s", e.Error())
 	}
 
-	if _, e := nerdz.Login("admin@admin.net", "adminadmin"); e != nil {
+	if _, e := db.Login("admin@admin.net", "adminadmin"); e != nil {
 		t.Fatalf("Login using email and password shold work but got: %s", e.Error())
 	}
 
-	if _, e := nerdz.Login("admin", "adminadmin"); e != nil {
+	if _, e := db.Login("admin", "adminadmin"); e != nil {
 		t.Fatalf("Login using username and password shold work but got: %s", e.Error())
 	}
 
-	if _, e := nerdz.Login("BANANA", "adminadmin"); e == nil {
+	if _, e := db.Login("BANANA", "adminadmin"); e == nil {
 		t.Fatalf("Login using a wrong username and passowrd shold fail. But it worked")
 	}
 }
@@ -107,7 +107,7 @@ func TestBlackList(t *testing.T) {
 
 func TestHome(t *testing.T) {
 	// At most the last 10 posts from italian users
-	userHome := me.UserHome(nerdz.PostlistOptions{Following: false, Language: "it", N: 10})
+	userHome := me.UserHome(db.PostlistOptions{Following: false, Language: "it", N: 10})
 	if len(*userHome) != 10 {
 		t.Fatalf("Expected 10 posts, but got: %+v\n", len(*userHome))
 	}
@@ -115,7 +115,7 @@ func TestHome(t *testing.T) {
 	t.Logf("%+v\n", *userHome)
 
 	// At most the last 10 project posts from italian users
-	projectHome := me.ProjectHome(nerdz.PostlistOptions{Following: false, Language: "it", N: 10})
+	projectHome := me.ProjectHome(db.PostlistOptions{Following: false, Language: "it", N: 10})
 	if len(*projectHome) != 10 {
 		t.Fatalf("Expected 10 posts, but got: %+v\n", len(*projectHome))
 	}
@@ -123,13 +123,13 @@ func TestHome(t *testing.T) {
 	t.Logf("%+v\n", *projectHome)
 
 	// At most the last 10 posts from German users
-	userHome = me.UserHome(nerdz.PostlistOptions{Following: false, Language: "de", N: 10})
+	userHome = me.UserHome(db.PostlistOptions{Following: false, Language: "de", N: 10})
 	if len(*userHome) != 0 {
 		t.Fatalf("Expected 0 posts, but got: %+v\n", len(*userHome))
 	}
 
 	// At most the last 10 posts to English users from users that "user" is following
-	userHome = me.UserHome(nerdz.PostlistOptions{Following: true, Language: "en", N: 10})
+	userHome = me.UserHome(db.PostlistOptions{Following: true, Language: "en", N: 10})
 
 	if len(*userHome) == 0 {
 		t.Error("Expected at least 1 post from an english user the 'user' is following. But 0 found")
@@ -138,7 +138,7 @@ func TestHome(t *testing.T) {
 	t.Logf("%+v\n", *userHome)
 
 	// The single post older (created before) the one with hpid 1000, from some user that 'user' follow and to an english speaking one
-	userHome = me.UserHome(nerdz.PostlistOptions{Following: true, Language: "en", N: 1, Older: 1000})
+	userHome = me.UserHome(db.PostlistOptions{Following: true, Language: "en", N: 1, Older: 1000})
 
 	if len(*userHome) != 1 {
 		t.Fatalf("Expeted 1 post, but got: %d", len(*userHome))
@@ -151,7 +151,7 @@ func TestHome(t *testing.T) {
 	}
 
 	// At most 2 posts in the Homepage formed by my posts and my friends posts
-	userHome = me.UserHome(nerdz.PostlistOptions{Following: true, Followers: true, N: 2})
+	userHome = me.UserHome(db.PostlistOptions{Following: true, Followers: true, N: 2})
 
 	if len(*userHome) != 2 {
 		t.Fatalf("Expeted 2 posts, but got: %d", len(*userHome))
@@ -162,7 +162,7 @@ func TestHome(t *testing.T) {
 	lastFriendPost := (*userHome)[0]
 
 	// Get the (at max 20, in this case only 1) newer posts than the one with the "Newer" from friends
-	userHome = me.UserHome(nerdz.PostlistOptions{
+	userHome = me.UserHome(db.PostlistOptions{
 		Following: true,
 		Followers: true,
 		Newer:     (*userHome)[1].Hpid})
@@ -173,13 +173,13 @@ func TestHome(t *testing.T) {
 }
 
 func TestUserPostlist(t *testing.T) {
-	postList := me.Postlist(nerdz.PostlistOptions{})
+	postList := me.Postlist(db.PostlistOptions{})
 	if len(*postList) != 20 {
 		t.Fatalf("Expected 20  posts, but got: %+v\n", len(*postList))
 	}
 
 	// Older than 1 (all) and newer than 8000 (no one) -> empty
-	postList = me.Postlist(nerdz.PostlistOptions{
+	postList = me.Postlist(db.PostlistOptions{
 		Older: 1,
 		Newer: 80000})
 
@@ -188,7 +188,7 @@ func TestUserPostlist(t *testing.T) {
 	}
 
 	// Find posts between 103 and 97 inclusive, in user profile, from everybody.
-	postList = me.Postlist(nerdz.PostlistOptions{
+	postList = me.Postlist(db.PostlistOptions{
 		Older: 103,
 		Newer: 97,
 	})
@@ -199,7 +199,7 @@ func TestUserPostlist(t *testing.T) {
 }
 
 func TestAddEditDeleteUserPost(t *testing.T) {
-	var post nerdz.UserPost
+	var post db.UserPost
 
 	// New post on my board (To = 0)
 	post.Message = "All right"
@@ -248,10 +248,10 @@ func TestAddEditDeleteUserPost(t *testing.T) {
 }
 
 func TestAddEditDeleteUserPostComment(t *testing.T) {
-	postList := *me.Postlist(nerdz.PostlistOptions{N: 1})
-	existingPost := postList[0].(*nerdz.UserPost)
+	postList := *me.Postlist(db.PostlistOptions{N: 1})
+	existingPost := postList[0].(*db.UserPost)
 
-	var comment nerdz.UserPostComment
+	var comment db.UserPostComment
 	comment.Message = "Nice <html>"
 	comment.Hpid = existingPost.Hpid
 
@@ -278,7 +278,7 @@ func TestAddEditDeleteUserPostComment(t *testing.T) {
 }
 
 func TestAddEditDeleteProjectPost(t *testing.T) {
-	var post nerdz.ProjectPost
+	var post db.ProjectPost
 
 	myProject := me.Projects()[0]
 	post.To = myProject.Counter
@@ -301,11 +301,11 @@ func TestAddEditDeleteProjectPost(t *testing.T) {
 
 func TestAddEditDeleteProjectPostComment(t *testing.T) {
 	myProject := me.Projects()[0]
-	projectPostList := *myProject.Postlist(nerdz.PostlistOptions{N: 1})
+	projectPostList := *myProject.Postlist(db.PostlistOptions{N: 1})
 
-	projectPost := projectPostList[0].(*nerdz.ProjectPost)
+	projectPost := projectPostList[0].(*db.ProjectPost)
 
-	var projectPostComment nerdz.ProjectPostComment
+	var projectPostComment db.ProjectPostComment
 	projectPostComment.Hpid = projectPost.Hpid
 	projectPostComment.Message = "lol k"
 
@@ -326,7 +326,7 @@ func TestAddEditDeleteProjectPostComment(t *testing.T) {
 }
 
 func TestAddEditDeletePm(t *testing.T) {
-	var pm nerdz.Pm
+	var pm db.Pm
 
 	pm.Message = "Hi bro. Join telegram now"
 	pm.To = withClosedProfile.Counter
@@ -346,7 +346,7 @@ func TestAddEditDeletePm(t *testing.T) {
 }
 
 func TestFollowUser(t *testing.T) {
-	other, _ = nerdz.NewUser(3)
+	other, _ = db.NewUser(3)
 
 	t.Logf("User(%d) follows User(%d)", me.Counter, other.Counter)
 
@@ -371,7 +371,7 @@ func TestFriends(t *testing.T) {
 }
 
 func TestFollowProject(t *testing.T) {
-	project, _ := nerdz.NewProject(1)
+	project, _ := db.NewProject(1)
 
 	t.Log("I want to follow a fantastic project whose name is: ", project.Name)
 	oldNumFollowers := len(project.NumericFollowers())
@@ -388,7 +388,7 @@ func TestFollowProject(t *testing.T) {
 }
 
 func TestUnfollowUser(t *testing.T) {
-	other, _ = nerdz.NewUser(3)
+	other, _ = db.NewUser(3)
 	t.Logf("User(%d) unfollows User(%d)", me.Counter, other.Counter)
 
 	oldNumFollowers := len(other.NumericFollowers())
@@ -405,7 +405,7 @@ func TestUnfollowUser(t *testing.T) {
 }
 
 func TestUnfollowProject(t *testing.T) {
-	project, _ := nerdz.NewProject(2)
+	project, _ := db.NewProject(2)
 
 	t.Log("I want to unfollow a useless project whose name is: ", project.Name)
 	oldNumFollowers := len(project.Followers())
@@ -421,12 +421,12 @@ func TestUnfollowProject(t *testing.T) {
 
 func TestNewUserPost(t *testing.T) {
 	var e error
-	var postA, postB *nerdz.UserPost
-	if postA, e = nerdz.NewUserPost(13); e != nil {
+	var postA, postB *db.UserPost
+	if postA, e = db.NewUserPost(13); e != nil {
 		t.Fatalf("NewUserPost(13) shouldn't fail, but got: %s\n", e.Error())
 	}
 
-	if postB, e = nerdz.NewUserPostWhere(&nerdz.UserPost{nerdz.Post{To: 3, Pid: 2}}); e != nil {
+	if postB, e = db.NewUserPostWhere(&db.UserPost{db.Post{To: 3, Pid: 2}}); e != nil {
 		t.Fatalf("NewUserPostWhere To:3 and Pid:2 shouldn't fail, but got: %s\n", e.Error())
 	}
 
@@ -436,7 +436,7 @@ func TestNewUserPost(t *testing.T) {
 }
 
 func TestUserPostBookmark(t *testing.T) {
-	post, _ := nerdz.NewUserPost(13)
+	post, _ := db.NewUserPost(13)
 
 	t.Logf("User(%d) bookmarkers the user's post(%d) ", me.Counter, post.Hpid)
 
@@ -452,7 +452,7 @@ func TestUserPostBookmark(t *testing.T) {
 }
 
 func TestUserPostUnbookmark(t *testing.T) {
-	post, _ := nerdz.NewUserPost(13)
+	post, _ := db.NewUserPost(13)
 
 	t.Logf("User(%d) unbookmarkers the user's post(%d) ", me.Counter, post.Hpid)
 
@@ -468,7 +468,7 @@ func TestUserPostUnbookmark(t *testing.T) {
 }
 
 func TestProjectPostBookmark(t *testing.T) {
-	post, _ := nerdz.NewProjectPost(2)
+	post, _ := db.NewProjectPost(2)
 
 	t.Logf("User(%d) bookmarkers the project's post(%d) ", me.Counter, post.Hpid)
 
@@ -484,7 +484,7 @@ func TestProjectPostBookmark(t *testing.T) {
 }
 
 func TestProjectPostUnbookmark(t *testing.T) {
-	post, _ := nerdz.NewProjectPost(2)
+	post, _ := db.NewProjectPost(2)
 
 	t.Logf("User(%d) unbookmarkers the project's post(%d) ", me.Counter, post.Hpid)
 
@@ -500,9 +500,9 @@ func TestProjectPostUnbookmark(t *testing.T) {
 }
 
 func TestPms(t *testing.T) {
-	other, _ = nerdz.NewUser(2)
+	other, _ = db.NewUser(2)
 	t.Logf("User(%d) pm-> User(%d)", me.Counter, other.Counter)
-	pmList, err := me.Pms(other.Counter, nerdz.PmsOptions{})
+	pmList, err := me.Pms(other.Counter, db.PmsOptions{})
 
 	if err != nil {
 		t.Fatalf("Error trying to get pms between user(%d) and user(%d) - %v", me.ID(), other.ID(), err)
@@ -517,7 +517,7 @@ func TestPms(t *testing.T) {
 		t.Fatalf("Conversation between me and other should be removed, but got: %s", err.Error())
 	}
 
-	pmList, err = me.Pms(other.ID(), nerdz.PmsOptions{})
+	pmList, err = me.Pms(other.ID(), db.PmsOptions{})
 	if len(*pmList) != 0 {
 		t.Fatalf("Conversation between me and other should be removed, but %d messages got instead", len(*pmList))
 	}
@@ -541,7 +541,7 @@ func TestConversation(t *testing.T) {
 }
 
 func TestDoVotes(t *testing.T) {
-	userPost, _ := nerdz.NewUserPost(13)
+	userPost, _ := db.NewUserPost(13)
 	votesCount := userPost.VotesCount()
 	votes := *userPost.Votes()
 
@@ -560,7 +560,7 @@ func TestDoVotes(t *testing.T) {
 		t.Fatalf("User is unable to remove preference from user post - %v. %d != %d", err, votesCount, userPost.VotesCount())
 	}
 
-	projPost, _ := nerdz.NewProjectPost(2)
+	projPost, _ := db.NewProjectPost(2)
 
 	t.Logf("user(%d) likes project post(%d)", me.Counter, projPost.Hpid)
 
@@ -578,7 +578,7 @@ func TestInterests(t *testing.T) {
 		t.Fatalf("PATRIK expected, but got: %s", interests[0])
 	}
 
-	newIn := nerdz.Interest{
+	newIn := db.Interest{
 		Value: "awsome interest",
 	}
 
