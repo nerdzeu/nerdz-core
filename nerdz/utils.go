@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 2016 Paolo Galeone <nessuno@nerdz.eu>
 
 This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package nerdz
 
 import (
-	"github.com/nerdzeu/nerdz-api/utils"
+	"github.com/mcilloni/nerdz-core/utils"
 )
 
 // Users returns a slice of pointer to User, fetched from its Ids

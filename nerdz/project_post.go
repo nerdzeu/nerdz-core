@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 2016 Paolo Galeone <nessuno@nerdz.eu>
 
 This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/nerdzeu/nerdz-api/utils"
+	"github.com/mcilloni/nerdz-core/utils"
 )
 
 // NewProjectPost initializes a ProjectPost struct

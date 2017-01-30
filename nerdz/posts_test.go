@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 2016 Paolo Galeone <nessuno@nerdz.eu>
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nerdzeu/nerdz-api/nerdz"
+	"github.com/mcilloni/nerdz-core/nerdz"
 )
 
 var userPost, userPost1 *nerdz.UserPost

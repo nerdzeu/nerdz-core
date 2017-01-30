@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 2016 Paolo Galeone <nessuno@nerdz.eu>
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/galeone/igor"
-	"github.com/nerdzeu/nerdz-api/utils"
+	"github.com/mcilloni/nerdz-core/utils"
 	"time"
 )
 
