@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mcilloni/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/utils"
 )
 
 // NewUserPost returns the *UserPost with id hpid if exists. Returns error otherwise

@@ -20,7 +20,6 @@ package db
 import (
 	"database/sql"
 	"github.com/galeone/igor"
-	"strings"
 	"time"
 )
 
@@ -291,37 +290,6 @@ type UserPost struct {
 	Post
 }
 
-// GetTO returns its Transfer Object
-func (p *UserPost) GetTO(users ...*User) *PostTO {
-	if len(users) != 1 {
-		panic("UserPost.GetTO requires a user parameter")
-	}
-	user := users[0]
-	postTO := p.Post.GetTO()
-	postTO.Type = UserBoardID
-
-	if from, e := NewUser(p.From); e == nil {
-		postTO.FromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(p.To); e == nil {
-		postTO.ToInfo = to.Info().GetTO()
-	}
-
-	postTO.Rate = p.VotesCount()
-	postTO.RevisionsCount = p.RevisionsNumber()
-	postTO.CommentsCount = p.CommentsCount()
-	postTO.BookmarksCount = p.BookmarksCount()
-	postTO.LurkersCount = p.LurkersCount()
-	postTO.Timestamp = p.Time.Unix()
-	postTO.URL = p.URL().String()
-	postTO.CanBookmark = user.CanBookmark(p)
-	postTO.CanComment = user.CanComment(p)
-	postTO.CanDelete = user.CanDelete(p)
-	postTO.CanEdit = user.CanEdit(p)
-	postTO.CanLurk = user.CanLurk(p)
-	return postTO
-}
-
 // TableName returns the table name associated with the structure
 func (UserPost) TableName() string {
 	return "posts"
@@ -334,19 +302,6 @@ type UserPostRevision struct {
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	RevNo   uint16
 	Counter uint64 `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (p *UserPostRevision) GetTO(users ...*User) *UserPostRevisionTO {
-	return &UserPostRevisionTO{
-		original:  p,
-		Hpid:      p.Hpid,
-		Message:   p.Message,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		RevNo:     p.RevNo,
-		Counter:   p.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -369,27 +324,6 @@ func (UserPostVote) TableName() string {
 	return "thumbs"
 }
 
-// GetTO returns its Transfer Object
-func (t *UserPostVote) GetTO(users ...*User) *UserPostVoteTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(t.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(t.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &UserPostVoteTO{
-		original:  t,
-		Hpid:      t.Hpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Vote:      t.Vote,
-		Time:      t.Time,
-		Timestamp: t.Time.Unix(),
-		Counter:   t.Counter,
-	}
-}
-
 // UserPostLurk is the model for the relation lurkers
 type UserPostLurk struct {
 	Hpid    uint64
@@ -397,26 +331,6 @@ type UserPostLurk struct {
 	To      uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (l *UserPostLurk) GetTO(users ...*User) *UserPostLurkTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(l.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(l.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &UserPostLurkTO{
-		original:  l,
-		Hpid:      l.Hpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      l.Time,
-		Timestamp: l.Time.Unix(),
-		Counter:   l.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -434,35 +348,6 @@ type UserPostComment struct {
 	Lang     string
 	Time     time.Time `sql:"default:(now() at time zone 'utc')"`
 	Editable bool      `sql:"default:true"`
-}
-
-// GetTO returns its Transfer Object
-func (c *UserPostComment) GetTO(users ...*User) *UserPostCommentTO {
-	if len(users) != 1 {
-		panic("UserPostComment.GetTO requires a user parameter")
-	}
-	user := users[0]
-
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(c.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(c.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &UserPostCommentTO{
-		original:  c,
-		Hcid:      c.Hcid,
-		Hpid:      c.Hpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Message:   c.Message,
-		Lang:      c.Lang,
-		Time:      c.Time,
-		Timestamp: c.Time.Unix(),
-		CanEdit:   user.CanEdit(c),
-		CanDelete: user.CanDelete(c),
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -484,19 +369,6 @@ func (UserPostCommentRevision) TableName() string {
 	return "comments_revisions"
 }
 
-// GetTO returns its Transfer Object
-func (c *UserPostCommentRevision) GetTO(users ...*User) *UserPostCommentRevisionTO {
-	return &UserPostCommentRevisionTO{
-		original:  c,
-		Hcid:      c.Hcid,
-		Message:   c.Message,
-		Time:      c.Time,
-		Timestamp: c.Time.Unix(),
-		RevNo:     c.RevNo,
-		Counter:   c.Counter,
-	}
-}
-
 // UserPostBookmark is the model for the relation bookmarks
 type UserPostBookmark struct {
 	Hpid    uint64
@@ -510,22 +382,6 @@ func (UserPostBookmark) TableName() string {
 	return "bookmarks"
 }
 
-// GetTO returns its Transfer Object
-func (b *UserPostBookmark) GetTO(users ...*User) *UserPostBookmarkTO {
-	var fromInfo *InfoTO
-	if from, e := NewUser(b.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	return &UserPostBookmarkTO{
-		original:  b,
-		Hpid:      b.Hpid,
-		FromInfo:  fromInfo,
-		Time:      b.Time,
-		Timestamp: b.Time.Unix(),
-		Counter:   b.Counter,
-	}
-}
-
 // Pm is the model for the relation pms
 type Pm struct {
 	Pmid    uint64 `igor:"primary_key"`
@@ -535,35 +391,6 @@ type Pm struct {
 	Lang    string
 	ToRead  bool
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
-}
-
-// GetTO returns its Transfer Object
-func (p *Pm) GetTO(users ...*User) *PmTO {
-	if len(users) != 1 {
-		panic("Pm.GetTO requires a user parameter")
-	}
-	user := users[0]
-
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(p.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(p.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &PmTO{
-		original:  p,
-		Pmid:      p.Pmid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Message:   p.Message,
-		Lang:      p.Lang,
-		ToRead:    p.ToRead,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		CanDelete: user.CanDelete(p),
-		CanEdit:   user.CanEdit(p),
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -585,23 +412,6 @@ type Project struct {
 	CreationTime time.Time `sql:"default:(now() at time zone 'utc')"`
 }
 
-// GetTO returns its Transfer Object
-func (p *Project) GetTO(users ...*User) *ProjectTO {
-	return &ProjectTO{
-		original:     p,
-		Counter:      p.Counter,
-		Description:  p.Description,
-		Name:         p.Name,
-		Private:      p.Private,
-		Photo:        p.Photo,
-		Website:      p.Website,
-		Goal:         p.Goal,
-		Visible:      p.Visible,
-		Open:         p.Open,
-		CreationTime: p.CreationTime,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (Project) TableName() string {
 	return "groups"
@@ -614,26 +424,6 @@ type ProjectMember struct {
 	Time     time.Time `sql:"default:(now() at time zone 'utc')"`
 	ToNotify bool
 	Counter  uint64 `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (m *ProjectMember) GetTO(users ...*User) *ProjectMemberTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(m.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewProject(m.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectMemberTO{
-		original:  m,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      m.Time,
-		Timestamp: m.Time.Unix(),
-		ToNotify:  m.ToNotify,
-		Counter:   m.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -651,26 +441,6 @@ type ProjectOwner struct {
 }
 
 // GetTO returns its Transfer Object
-func (o *ProjectOwner) GetTO(users ...*User) *ProjectOwnerTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(o.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewProject(o.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectOwnerTO{
-		original:  o,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      o.Time,
-		Timestamp: o.Time.Unix(),
-		ToNotify:  o.ToNotify,
-		Counter:   o.Counter,
-	}
-
-}
-
 // TableName returns the table name associated with the structure
 func (ProjectOwner) TableName() string {
 	return "groups_owners"
@@ -686,37 +456,6 @@ func (ProjectPost) TableName() string {
 	return "groups_posts"
 }
 
-// GetTO returns its Transfer Object
-func (p *ProjectPost) GetTO(users ...*User) *PostTO {
-	if len(users) != 1 {
-		panic("ProjectPost.GetTO requires a user parameter")
-	}
-	user := users[0]
-	postTO := p.Post.GetTO()
-	postTO.Type = ProjectBoardID
-
-	if from, e := NewUser(p.From); e == nil {
-		postTO.FromInfo = from.Info().GetTO()
-	}
-	if to, e := NewProject(p.To); e == nil {
-		postTO.ToInfo = to.Info().GetTO()
-	}
-
-	postTO.Rate = p.VotesCount()
-	postTO.RevisionsCount = p.RevisionsNumber()
-	postTO.CommentsCount = p.CommentsCount()
-	postTO.BookmarksCount = p.BookmarksCount()
-	postTO.LurkersCount = p.LurkersCount()
-	postTO.Timestamp = p.Time.Unix()
-	postTO.URL = p.URL().String()
-	postTO.CanBookmark = user.CanBookmark(p)
-	postTO.CanComment = user.CanComment(p)
-	postTO.CanDelete = user.CanDelete(p)
-	postTO.CanEdit = user.CanEdit(p)
-	postTO.CanLurk = user.CanLurk(p)
-	return postTO
-}
-
 // ProjectPostRevision is the model for the relation groups_posts_revisions
 type ProjectPostRevision struct {
 	Hpid    uint64
@@ -724,19 +463,6 @@ type ProjectPostRevision struct {
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	RevNo   uint16
 	Counter uint64 `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (p *ProjectPostRevision) GetTO(users ...*User) *ProjectPostRevisionTO {
-	return &ProjectPostRevisionTO{
-		original:  p,
-		Hpid:      p.Hpid,
-		Message:   p.Message,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		RevNo:     p.RevNo,
-		Counter:   p.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -759,27 +485,6 @@ func (ProjectPostVote) TableName() string {
 	return "groups_thumbs"
 }
 
-// GetTO returns its Transfer Object
-func (t *ProjectPostVote) GetTO(users ...*User) *ProjectPostVoteTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(t.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(t.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectPostVoteTO{
-		original:  t,
-		Hpid:      t.Hpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      t.Time,
-		Timestamp: t.Time.Unix(),
-		Vote:      t.Vote,
-		Counter:   t.Counter,
-	}
-}
-
 // ProjectPostLurk is the model for the relation groups_lurkers
 type ProjectPostLurk struct {
 	Hpid    uint64
@@ -787,26 +492,6 @@ type ProjectPostLurk struct {
 	To      uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (l *ProjectPostLurk) GetTO(users ...*User) *ProjectPostLurkTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(l.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewProject(l.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectPostLurkTO{
-		original:  l,
-		Hpid:      l.Hpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      l.Time,
-		Timestamp: l.Time.Unix(),
-		Counter:   l.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -826,36 +511,6 @@ type ProjectPostComment struct {
 	Editable bool      `sql:"default:true"`
 }
 
-// GetTO returns its Transfer Object
-func (c *ProjectPostComment) GetTO(users ...*User) *ProjectPostCommentTO {
-	if len(users) != 1 {
-		panic("ProjectPostComment.GetTO requires a user parameter")
-	}
-	user := users[0]
-
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(c.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-
-	if to, e := NewProject(c.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectPostCommentTO{
-		original:  c,
-		Hcid:      c.Hcid,
-		Hpid:      c.Hpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Message:   c.Message,
-		Lang:      c.Lang,
-		Time:      c.Time,
-		Timestamp: c.Time.Unix(),
-		CanDelete: user.CanDelete(c),
-		CanEdit:   user.CanEdit(c),
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (ProjectPostComment) TableName() string {
 	return "groups_comments"
@@ -870,19 +525,6 @@ type ProjectPostCommentRevision struct {
 	Counter uint64 `igor:"primary_key"`
 }
 
-// GetTO returns its Transfer Object
-func (r *ProjectPostCommentRevision) GetTO(users ...*User) *ProjectPostCommentRevisionTO {
-	return &ProjectPostCommentRevisionTO{
-		original:  r,
-		Hcid:      r.Hcid,
-		Message:   r.Message,
-		Time:      r.Time,
-		Timestamp: r.Time.Unix(),
-		RevNo:     r.RevNo,
-		Counter:   r.Counter,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (ProjectPostCommentRevision) TableName() string {
 	return "groups_comments_revisions"
@@ -894,22 +536,6 @@ type ProjectPostBookmark struct {
 	From    uint64
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (b *ProjectPostBookmark) GetTO(users ...*User) *ProjectPostBookmarkTO {
-	var fromInfo *InfoTO
-	if from, e := NewUser(b.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	return &ProjectPostBookmarkTO{
-		original:  b,
-		Hpid:      b.Hpid,
-		FromInfo:  fromInfo,
-		Time:      b.Time,
-		Timestamp: b.Time.Unix(),
-		Counter:   b.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -926,26 +552,6 @@ type ProjectFollower struct {
 	Counter  uint64 `igor:"primary_key"`
 }
 
-// GetTO returns its Transfer Object
-func (p *ProjectFollower) GetTO(users ...*User) *ProjectFollowerTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(p.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewProject(p.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectFollowerTO{
-		original:  p,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      p.Time,
-		Timestamp: p.Time.Unix(),
-		ToNotify:  p.ToNotify,
-		Counter:   p.Counter,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (ProjectFollower) TableName() string {
 	return "groups_followers"
@@ -957,21 +563,6 @@ type UserPostCommentVote struct {
 	From    uint64
 	Vote    int8
 	Counter uint64 `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (t *UserPostCommentVote) GetTO(users ...*User) *UserPostCommentVoteTO {
-	var userInfo *InfoTO
-	if user, e := NewUser(t.From); e == nil {
-		userInfo = user.Info().GetTO()
-	}
-	return &UserPostCommentVoteTO{
-		original: t,
-		Hcid:     t.Hcid,
-		User:     userInfo,
-		Vote:     t.Vote,
-		Counter:  t.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -987,27 +578,6 @@ type ProjectPostCommentVote struct {
 	Vote    int8
 	Time    time.Time `sql:"default:(now() at time zone 'utc')"`
 	Counter uint64    `igor:"primary_key"`
-}
-
-// GetTO returns its Transfer Object
-func (t *ProjectPostCommentVote) GetTO(users ...*User) *ProjectPostCommentVoteTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(t.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(t.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &ProjectPostCommentVoteTO{
-		original:  t,
-		Hcid:      t.Hcid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Vote:      t.Vote,
-		Time:      t.Time,
-		Timestamp: t.Time.Unix(),
-		Counter:   t.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -1028,31 +598,10 @@ func (DeletedUser) TableName() string {
 	return "deleted_users"
 }
 
-// GetTO returns its Transfer Object
-func (u *DeletedUser) GetTO(users ...*User) *DeletedUserTO {
-	return &DeletedUserTO{
-		original:   u,
-		Counter:    u.Counter,
-		Username:   u.Username,
-		Time:       u.Time,
-		Timestamp:  u.Time.Unix(),
-		Motivation: u.Motivation,
-	}
-}
-
 // SpecialUser is the model for the relation special_users
 type SpecialUser struct {
 	Role    string `igor:"primary_key"`
 	Counter uint64
-}
-
-// GetTO returns its Transfer Object
-func (u *SpecialUser) GetTO(users ...*User) *SpecialUserTO {
-	return &SpecialUserTO{
-		original: u,
-		Role:     u.Role,
-		Counter:  u.Counter,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -1066,15 +615,6 @@ type SpecialProject struct {
 	Counter uint64
 }
 
-// GetTO returns its Transfer Object
-func (p *SpecialProject) GetTO(users ...*User) *SpecialProjectTO {
-	return &SpecialProjectTO{
-		original: p,
-		Role:     p.Role,
-		Counter:  p.Counter,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (SpecialProject) TableName() string {
 	return "special_groups"
@@ -1086,17 +626,6 @@ type PostClassification struct {
 	UHpid uint64
 	GHpid uint64
 	Tag   string
-}
-
-// GetTO returns its Transfer Object
-func (p *PostClassification) GetTO(users ...*User) *PostClassificationTO {
-	return &PostClassificationTO{
-		original: p,
-		ID:       p.ID,
-		UHpid:    p.UHpid,
-		GHpid:    p.GHpid,
-		Tag:      p.Tag,
-	}
 }
 
 // TableName returns the table name associated with the structure
@@ -1115,28 +644,6 @@ type Mention struct {
 	ToNotify bool
 }
 
-// GetTO returns its Transfer Object
-func (m *Mention) GetTO(users ...*User) *MentionTO {
-	var fromInfo, toInfo *InfoTO
-	if from, e := NewUser(m.From); e == nil {
-		fromInfo = from.Info().GetTO()
-	}
-	if to, e := NewUser(m.To); e == nil {
-		toInfo = to.Info().GetTO()
-	}
-	return &MentionTO{
-		original:  m,
-		ID:        m.ID,
-		UHpid:     m.UHpid,
-		GHpid:     m.GHpid,
-		FromInfo:  fromInfo,
-		ToInfo:    toInfo,
-		Time:      m.Time,
-		Timestamp: m.Time.Unix(),
-		ToNotify:  m.ToNotify,
-	}
-}
-
 // TableName returns the table name associated with the structure
 func (Mention) TableName() string {
 	return "mentions"
@@ -1151,14 +658,6 @@ type Message struct {
 // TableName returns the table name associated with the structure
 func (Message) TableName() string {
 	return "messages"
-}
-
-// GetTO returns its Transfer Object
-func (p *Message) GetTO(users ...*User) *PostTO {
-	if p.Type == UserPostID {
-		return p.Post.UserPost().GetTO(users...)
-	}
-	return p.Post.ProjectPost().GetTO(users...)
 }
 
 // OAuth2Client implements the osin.Client interface

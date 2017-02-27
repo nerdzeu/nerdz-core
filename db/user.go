@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcilloni/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/utils"
 )
 
 // NewUser returns the user with the specified id

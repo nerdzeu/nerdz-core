@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mcilloni/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/utils"
 )
 
 // NewProjectPostComment initializes a ProjectPostComment struct

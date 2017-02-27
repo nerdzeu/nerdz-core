@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/galeone/igor"
-	"github.com/mcilloni/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/utils"
 	"time"
 )
 

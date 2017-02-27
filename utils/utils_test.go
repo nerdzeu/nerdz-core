@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package utils_test
 
 import (
-	"github.com/mcilloni/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/utils"
 	"testing"
 )
 

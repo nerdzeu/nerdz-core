@@ -1,5 +1,7 @@
-NERDZ-API - Back-end
+Nerdz - Database interface
 ====================
+
+# This document is legacy and may not be reliable.
 
 In this folder you can find the NERDZ back-end implementation.
 

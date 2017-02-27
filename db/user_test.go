@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mcilloni/nerdz-core/db"
+	"github.com/nerdzeu/nerdz-core/db"
 )
 
 var me, other, blacklisted, withClosedProfile *db.User

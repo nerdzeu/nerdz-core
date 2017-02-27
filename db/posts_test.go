@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mcilloni/nerdz-core/db"
+	"github.com/nerdzeu/nerdz-core/db"
 )
 
 var userPost, userPost1 *db.UserPost

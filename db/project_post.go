@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mcilloni/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/utils"
 )
 
 // NewProjectPost initializes a ProjectPost struct

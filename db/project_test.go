@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mcilloni/nerdz-core/db"
+	"github.com/nerdzeu/nerdz-core/db"
 )
 
 var prj *db.Project
