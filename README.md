@@ -1,38 +1,20 @@
-NERDZ API
+Nerdz Core
 =========
 
-# Configuration file
+Nerdz Core is a slimmed-down fork of Nerdz API which strives to implement a simplified, streamlined backend service for Nerdz, to be used as the entrypoint for several other services (including API and Web itself).
 
-Because JSON standard prohibits comments, your must remove the comments if you are willing to use the sample configFile.json below (comments are there as an explanation).
+Work in progress.
 
-```JSON
-{
-    "DbUsername" : "nerdz",                 // required
-    "DbPassword" : "pass",                  // required if any, otherwise ""
-    "DbName"     : "nerdz",                 // required
-    "DbHost"     : "127.0.0.1",             // optional, i.e. "" -> fallback to localhost
-    "DbPort"     : 0,                       // optional, i.e. 0 -> fallback to 5432
-    "DbSSLMode"    : "disable",             // optional, i.e. "" -> fallback to disable
-    "NERDZPath"  : "~/nerdz.eu/",           // required
-    "NERDZHost"  : "www.nerdz.eu",          // required
-    "EnableLog"  : false,		            // optional, default false
-    "Host"       : "api.nerdz.eu",          // required
-    "Scheme"     : "https",                 // required, in production must be https (mandatory for OAuth2)
-    "Port"       : 8080                     // API port, optional -> fallback to 7536
-}
-```
+# Roadmap
 
-# Tests
-
-For back-end tests, see `nerdz/README.md`.
-
-For front-end tests, you have to wait ;)
+1. Trim away all of the REST/API logic from the Nerdz API db access package (`nerdz`->`db`)
+2. Define Nerdz transfer objects using Protocol Buffer 
+3. Implement a TLS authenticated gRPC service to provide an unified access point to a Nerdz instance
+4. Create clients
 
 # Contributing
 
-If you want to contribute, you should be at least a [NERDZ](http://www.nerdz.eu/) user.
-
-Developers can go to `doc/CONTRIBUTING.md` to see the developer's guide to NERDZ-API.
+Feel free to contribute with code, documentation, by running tests or by reporting issues. 
 
 # License
 Copyright (C) 2016 Paolo Galeone; nessuno@nerdz.eu
