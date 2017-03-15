@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nerdzeu/nerdz-core/utils"
+	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // NewProjectPostComment initializes a ProjectPostComment struct
@@ -130,20 +130,13 @@ func (comment *ProjectPostComment) SetText(message string) {
 }
 
 // SetLanguage set the language of the comment
-func (comment *ProjectPostComment) SetLanguage(language string) error {
-	if language == "" {
-		language = comment.Sender().Language()
-	}
-	if utils.InSlice(language, Configuration.Languages) {
-		comment.Lang = language
-		return nil
-	}
-	return fmt.Errorf("Language '%s' is not a valid or supported language", language)
+func (comment *ProjectPostComment) SetLanguage(language proto.Language) {
+	comment.Lang = dbLang[language]
 }
 
 // Language returns the message language
-func (comment *ProjectPostComment) Language() string {
-	return comment.Lang
+func (comment *ProjectPostComment) Language() proto.Language {
+	return protoLang[comment.Lang]
 }
 
 // IsEditable returns true if the comment is editable

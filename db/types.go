@@ -21,6 +21,8 @@ import (
 	"net/mail"
 	"net/url"
 	"time"
+
+	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // PersonalInfo is the struct that contains all the personal info of an user
@@ -51,34 +53,24 @@ type ContactInfo struct {
 	Steam    string
 }
 
-// Template is the representation of a nerdz website template
-type Template struct {
-	Number uint8
-	Name   string
-}
-
 // BoardInfo is that struct that contains all the informations related to the user's board
 type BoardInfo struct {
-	Language       string
-	Template       *Template
-	MobileTemplate *Template
-	Dateformat     string
-	IsClosed       bool
-	Private        bool
-	Whitelist      []*User
-	UserScript     *url.URL
+	Language   proto.Language
+	IsClosed   bool
+	Private    bool
+	Whitelist  []*User
+	UserScript *url.URL
 }
 
 // Info contains the informations common to every board
 // Used in API output to give user/project basic informations
 type Info struct {
-	ID          uint64
-	Owner       *Info
-	Name        string
-	Username    string
-	Website     *url.URL
-	Image       *url.URL
-	Closed      bool
-	Type        boardType
-	BoardString string
+	ID       uint64
+	Owner    *Info
+	Name     string
+	Username string
+	Website  *url.URL
+	Image    *url.URL
+	Closed   bool
+	Type     boardType
 }

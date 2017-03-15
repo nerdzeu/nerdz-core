@@ -19,10 +19,9 @@ package db
 
 import (
 	"fmt"
-	"net/url"
-	"strconv"
 	"time"
 
+	"github.com/nerdzeu/nerdz-core/proto"
 	"github.com/nerdzeu/nerdz-core/utils"
 )
 
@@ -124,20 +123,13 @@ func (post *ProjectPost) Owners() (ret []*User) {
 }
 
 // SetLanguage set the language of the post
-func (post *ProjectPost) SetLanguage(language string) error {
-	if language == "" {
-		language = post.Sender().Language()
-	}
-	if utils.InSlice(language, Configuration.Languages) {
-		post.Lang = language
-		return nil
-	}
-	return fmt.Errorf("Language '%s' is not a valid or supported language", language)
+func (post *ProjectPost) SetLanguage(language proto.Language) {
+	post.Lang = dbLang[language]
 }
 
 // Language returns the message language
-func (post *ProjectPost) Language() string {
-	return post.Lang
+func (post *ProjectPost) Language() proto.Language {
+	return protoLang[post.Lang]
 }
 
 // Revisions returns all the revisions of the message
@@ -277,12 +269,4 @@ func (post *ProjectPost) Lurkers() []*User {
 func (post *ProjectPost) LurkersCount() (count uint8) {
 	Db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Count(&count)
 	return
-}
-
-// URL returns the url of the post
-func (post *ProjectPost) URL() *url.URL {
-	return &url.URL{
-		Host: Configuration.NERDZHost,
-		Path: (post.Reference().(*Project)).Name + ":" + strconv.FormatUint(post.Pid, 10),
-	}
 }

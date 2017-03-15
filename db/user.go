@@ -11,7 +11,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License
+you should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nerdzeu/nerdz-core/proto"
 	"github.com/nerdzeu/nerdz-core/utils"
 )
 
@@ -198,22 +199,11 @@ func (user *User) ContactInfo() *ContactInfo {
 
 // BoardInfo returns a *BoardInfo struct
 func (user *User) BoardInfo() *BoardInfo {
-	defaultTemplate := Template{
-		Name:   Configuration.Templates[user.Profile.Template],
-		Number: user.Profile.Template}
-
-	mobileTemplate := Template{
-		Name:   Configuration.Templates[user.Profile.MobileTemplate],
-		Number: user.Profile.MobileTemplate}
-
 	return &BoardInfo{
-		Language:       user.BoardLang,
-		Template:       &defaultTemplate,
-		MobileTemplate: &mobileTemplate,
-		Dateformat:     user.Profile.Dateformat,
-		IsClosed:       user.Profile.Closed,
-		Private:        user.Private,
-		Whitelist:      user.Whitelist()}
+		Language:  protoLang[user.BoardLang],
+		IsClosed:  user.Profile.Closed,
+		Private:   user.Private,
+		Whitelist: user.Whitelist()}
 }
 
 // Whitelist returns a slice of users that are in the user whitelist
@@ -372,7 +362,7 @@ func (user *User) Vote(message existingMessage, vote int8) (Vote, error) {
 		return nil, fmt.Errorf("TODO(galeone): No preference for private message")
 	}
 
-	return nil, fmt.Errorf("Invalid parameter type: %s", reflect.TypeOf(message))
+	return nil, fmt.Errorf("invalid parameter type: %s", reflect.TypeOf(message))
 }
 
 // Conversations returns all the private conversations done by the user
@@ -409,19 +399,16 @@ func (user *User) DeleteConversation(other uint64) error {
 func (user *User) Info() *Info {
 	website, _ := url.Parse(user.Profile.Website)
 	gravaURL := utils.Gravatar(user.Email)
-	boardURL, _ := url.Parse(Configuration.NERDZHost)
-	boardURL.Path = user.Username + "."
 
 	return &Info{
-		ID:          user.ID(),
-		Owner:       nil,
-		Name:        user.Name,
-		Username:    user.Username,
-		Website:     website,
-		Image:       gravaURL,
-		Closed:      user.Profile.Closed,
-		BoardString: boardURL.String(),
-		Type:        UserBoardID}
+		ID:       user.ID(),
+		Owner:    nil,
+		Name:     user.Name,
+		Username: user.Username,
+		Website:  website,
+		Image:    gravaURL,
+		Closed:   user.Profile.Closed,
+		Type:     UserBoardID}
 }
 
 //Postlist returns the specified slice of post on the user board
@@ -496,7 +483,7 @@ func (user *User) Add(message newMessage) error {
 		return Db().Create(pm)
 	}
 
-	return fmt.Errorf("Invalid parameter type: %s", reflect.TypeOf(message))
+	return fmt.Errorf("invalid parameter type: %s", reflect.TypeOf(message))
 }
 
 // Delete an existing message
@@ -504,7 +491,7 @@ func (user *User) Delete(message existingMessage) error {
 	if user.CanDelete(message) {
 		return Db().Delete(message)
 	}
-	return errors.New("You can't delete this message")
+	return errors.New("you can't delete this message")
 }
 
 // Edit an existing message
@@ -521,7 +508,7 @@ func (user *User) Edit(message editingMessage) error {
 		}
 		return nil
 	}
-	return errors.New("You can't edit this message")
+	return errors.New("you can't edit this message")
 }
 
 // Follow creates a new "follow" relationship between the current user
@@ -529,7 +516,7 @@ func (user *User) Edit(message editingMessage) error {
 // or another NERDZ's user.
 func (user *User) Follow(board Board) error {
 	if board == nil {
-		return errors.New("Unable to follow an undefined board!")
+		return errors.New("unable to follow an undefined board")
 	}
 
 	switch board.(type) {
@@ -543,7 +530,7 @@ func (user *User) Follow(board Board) error {
 
 	}
 
-	return errors.New("Invalid follower type " + reflect.TypeOf(board).String())
+	return errors.New("invalid follower type " + reflect.TypeOf(board).String())
 }
 
 // WhitelistUser add other user to the user whitelist
@@ -583,7 +570,7 @@ func (user *User) UnblacklistUser(other *User) error {
 // or another NERDZ's user.
 func (user *User) Unfollow(board Board) error {
 	if board == nil {
-		return errors.New("Unable to unfollow an undefined board!")
+		return errors.New("unable to unfollow an undefined board")
 	}
 
 	switch board.(type) {
@@ -597,7 +584,7 @@ func (user *User) Unfollow(board Board) error {
 
 	}
 
-	return errors.New("Invalid follower type " + reflect.TypeOf(board).String())
+	return errors.New("invalid follower type " + reflect.TypeOf(board).String())
 }
 
 // Bookmark bookmarks the specified post by a specific user. An error is returned if the
@@ -605,7 +592,7 @@ func (user *User) Unfollow(board Board) error {
 // DBMS
 func (user *User) Bookmark(post ExistingPost) (Bookmark, error) {
 	if post == nil {
-		return nil, errors.New("Unable to bookmark undefined post!")
+		return nil, errors.New("unable to bookmark undefined post")
 	}
 
 	switch post.(type) {
@@ -622,14 +609,14 @@ func (user *User) Bookmark(post ExistingPost) (Bookmark, error) {
 		return &bookmark, err
 	}
 
-	return nil, errors.New("Invalid post type " + reflect.TypeOf(post).String())
+	return nil, errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
 // Unbookmark the specified post by a specific user. An error is returned if the
 // post isn't defined or if there are other errors returned by the DBMS
 func (user *User) Unbookmark(post ExistingPost) error {
 	if post == nil {
-		return errors.New("Unable to unbookmark undefined post!")
+		return errors.New("unable to unbookmark undefined post")
 	}
 
 	switch post.(type) {
@@ -642,7 +629,7 @@ func (user *User) Unbookmark(post ExistingPost) error {
 		return Db().Where(&ProjectPostBookmark{From: user.ID(), Hpid: projectPost.ID()}).Delete(ProjectPostBookmark{})
 	}
 
-	return errors.New("Invalid post type " + reflect.TypeOf(post).String())
+	return errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
 // Lurk lurkes the specified post by a specific user. An error is returned if the
@@ -650,7 +637,7 @@ func (user *User) Unbookmark(post ExistingPost) error {
 // DBMS
 func (user *User) Lurk(post ExistingPost) (Lurk, error) {
 	if post == nil {
-		return nil, errors.New("Unable to lurk undefined post!")
+		return nil, errors.New("unable to lurk undefined post")
 	}
 
 	switch post.(type) {
@@ -667,14 +654,14 @@ func (user *User) Lurk(post ExistingPost) (Lurk, error) {
 		return &lurk, err
 	}
 
-	return nil, errors.New("Invalid post type " + reflect.TypeOf(post).String())
+	return nil, errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
 // Unlurk the specified post by a specific user. An error is returned if the
 // post isn't defined or if there are other errors returned by the DBMS
 func (user *User) Unlurk(post ExistingPost) error {
 	if post == nil {
-		return errors.New("Unable to unlurk undefined post!")
+		return errors.New("unable to unlurk undefined post")
 	}
 
 	switch post.(type) {
@@ -687,14 +674,14 @@ func (user *User) Unlurk(post ExistingPost) error {
 		return Db().Where(&ProjectPostLurk{From: user.ID(), Hpid: projectPost.ID()}).Delete(ProjectPostLurk{})
 	}
 
-	return errors.New("Invalid post type " + reflect.TypeOf(post).String())
+	return errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
 // Lock lockes the specified post. If users are present, indiidual notifications
 // are disabled from the user presents in the users list.
 func (user *User) Lock(post ExistingPost, users ...*User) (*[]Lock, error) {
 	if post == nil {
-		return nil, errors.New("Unable to lurk undefined post!")
+		return nil, errors.New("unable to lurk undefined post")
 	}
 
 	switch post.(type) {
@@ -734,14 +721,14 @@ func (user *User) Lock(post ExistingPost, users ...*User) (*[]Lock, error) {
 		return &locks, nil
 	}
 
-	return nil, errors.New("Invalid post type " + reflect.TypeOf(post).String())
+	return nil, errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
 // Unlock the specified post by a specific user. An error is returned if the
 // post isn't defined or if there are other errors returned by the DBMS
 func (user *User) Unlock(post ExistingPost, users ...*User) error {
 	if post == nil {
-		return errors.New("Unable to unlock undefined post!")
+		return errors.New("unable to unlock undefined post")
 	}
 
 	switch post.(type) {
@@ -772,7 +759,7 @@ func (user *User) Unlock(post ExistingPost, users ...*User) error {
 		return nil
 	}
 
-	return errors.New("Invalid post type " + reflect.TypeOf(post).String())
+	return errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
 // AddInterest adds the specified interest. An error is returned if the
@@ -780,7 +767,7 @@ func (user *User) Unlock(post ExistingPost, users ...*User) error {
 func (user *User) AddInterest(interest *Interest) error {
 	interest.From = user.ID()
 	if interest.Value == "" {
-		return errors.New("Invalid interest value: (empty)")
+		return errors.New("invalid interest value: (empty)")
 	}
 	return Db().Create(interest)
 }
@@ -790,7 +777,7 @@ func (user *User) DeleteInterest(interest *Interest) error {
 	var toDelete Interest
 	if interest.ID <= 0 {
 		if interest.Value == "" {
-			return errors.New("Invalid interest ID and empty interest")
+			return errors.New("invalid interest ID and empty interest")
 		}
 		toDelete.Value = interest.Value
 	} else {
@@ -798,7 +785,7 @@ func (user *User) DeleteInterest(interest *Interest) error {
 	}
 
 	if interest.From != user.ID() {
-		return errors.New("You can't remove other user interests")
+		return errors.New("you can't remove other user interests")
 	}
 
 	toDelete.From = interest.From
@@ -819,8 +806,8 @@ func (user *User) ID() uint64 {
 }
 
 // Language returns the user language
-func (user *User) Language() string {
-	return user.Lang
+func (user *User) Language() proto.Language {
+	return protoLang[user.Lang]
 }
 
 // Can* methods

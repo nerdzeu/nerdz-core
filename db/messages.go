@@ -18,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package db
 
 import (
-	"github.com/galeone/igor"
 	"html"
-	"net/url"
+
+	"github.com/galeone/igor"
+	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // Type definitions for [comment, post, pm]
@@ -31,7 +32,7 @@ type newMessage interface {
 	SetSender(uint64)
 	SetReference(uint64)
 	SetText(string)
-	SetLanguage(string) error
+	SetLanguage(proto.Language)
 	ClearDefaults()
 }
 
@@ -40,7 +41,7 @@ type newMessage interface {
 // A post, refers to a user/project board
 type Reference interface {
 	ID() uint64
-	Language() string
+	Language() proto.Language
 }
 
 type userReferenceRelation interface {
@@ -108,7 +109,6 @@ type ExistingPost interface {
 	Lurkers() []*User
 	LurkersCount() uint8
 	Lurks() *[]Lurk
-	URL() *url.URL
 	IsClosed() bool
 	NumericType() uint8
 	Type() string
@@ -123,12 +123,14 @@ type ExistingComment interface {
 // Helper functions
 
 // createMessage is an helper function. It's used to Init a new message structure
-func createMessage(message newMessage, sender, reference uint64, text, language string) error {
+func createMessage(message newMessage, sender, reference uint64, text string, language proto.Language) error {
 	message.ClearDefaults()
 	message.SetSender(sender)
 	message.SetReference(reference)
 	message.SetText(html.EscapeString(text))
-	return message.SetLanguage(language)
+	message.SetLanguage(language)
+
+	return nil
 }
 
 // updateMessage is an helper function. It's used to update a message (requires an editingMessage)

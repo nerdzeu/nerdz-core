@@ -17,7 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package db
 
-import "net/url"
+import (
+	"net/url"
+
+	"github.com/nerdzeu/nerdz-core/proto"
+)
 
 // ProjectInfo is the struct that contains all the project's informations
 type ProjectInfo struct {
@@ -117,19 +121,16 @@ func (prj *Project) ProjectInfo() *ProjectInfo {
 func (prj *Project) Info() *Info {
 	website, _ := url.Parse(prj.Website.String)
 	image, _ := url.Parse(prj.Photo.String)
-	boardURL, _ := url.Parse(Configuration.NERDZHost)
-	boardURL.Path = prj.Name + ":"
 
 	return &Info{
-		ID:          prj.ID(),
-		Owner:       prj.Owner().Info(),
-		Name:        prj.Name,
-		Username:    "",
-		Website:     website,
-		Image:       image,
-		Closed:      !prj.Open,
-		BoardString: boardURL.String(),
-		Type:        ProjectBoardID}
+		ID:       prj.ID(),
+		Owner:    prj.Owner().Info(),
+		Name:     prj.Name,
+		Username: "",
+		Website:  website,
+		Image:    image,
+		Closed:   !prj.Open,
+		Type:     ProjectBoardID}
 }
 
 //Postlist returns the specified posts on the project
@@ -164,6 +165,6 @@ func (prj *Project) ID() uint64 {
 }
 
 // Language returns the project language
-func (prj *Project) Language() string {
+func (prj *Project) Language() proto.Language {
 	return prj.Owner().Language()
 }

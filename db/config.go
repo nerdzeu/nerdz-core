@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -37,35 +36,14 @@ type Config struct {
 	DbHost     string // optional -> default: localhost
 	DbPort     int16  // optional -> default: 5432
 	DbSSLMode  string // optional -> default: disable
-	NERDZPath  string
-	NERDZHost  string
-	Languages  []string
-	Scopes     []string
-	Templates  map[uint8]string
-	EnableLog  bool  //optional: default: false
-	Port       int16 // API port, optional -> default: 7536
+	EnableLog  bool   //optional: default: false
+	Port       int16  // service port, optional -> default: 7536
 	Host       string
 	Scheme     string
 }
 
-// Configuration represent the parsed configuration file
+// Configuration represent the parsed configuration
 var Configuration *Config
-
-var scopes = []string{
-	"profile",
-	"projects",
-	"pms",
-	"notifications",
-	"messages",         // implies profile_messages and project_messages
-	"profile_messages", // implies "profile_comments"
-	"project_messages", // implies "project_comments"
-	"followers",
-	"following",
-	"friends",
-	"profile_comments",
-	"project_comments",
-	"base", // access to every scope above
-}
 
 // initConfiguration initialize the API parsing the configuration file
 func initConfiguration(path string) error {
@@ -81,49 +59,8 @@ func initConfiguration(path string) error {
 		return err
 	}
 
-	var dirs []os.FileInfo
-	if dirs, err = ioutil.ReadDir(Configuration.NERDZPath + "/data/langs/"); err != nil || len(dirs) == 0 {
-		return errors.New("Check your NERDZPath: " + Configuration.NERDZPath)
-	}
-
-	for _, language := range dirs {
-		if language.Name() != "index.html" {
-			Configuration.Languages = append(Configuration.Languages, language.Name())
-		}
-	}
-
-	Configuration.Scopes = scopes
-
-	if dirs, err = ioutil.ReadDir(Configuration.NERDZPath + "/tpl/"); err != nil {
-		return err
-	}
-
-	Configuration.Templates = make(map[uint8]string)
-	for _, tpl := range dirs {
-		if tpl.Name() != "index.html" {
-			var tplNumber int
-			if tplNumber, err = strconv.Atoi(tpl.Name()); err != nil {
-				return err
-			}
-
-			var byteName []byte
-			if byteName, err = ioutil.ReadFile(Configuration.NERDZPath + "/tpl/" + tpl.Name() + "/NAME"); err != nil {
-				return err
-			}
-			Configuration.Templates[uint8(tplNumber)] = string(byteName)
-		}
-	}
-
 	if Configuration.Port == 0 {
 		Configuration.Port = 7536
-	}
-
-	if Configuration.NERDZHost != "" {
-		if _, e := url.Parse(Configuration.NERDZHost); e != nil {
-			return e
-		}
-	} else {
-		return errors.New("NERDZHost is a required field")
 	}
 
 	if Configuration.Host != "" {
@@ -150,14 +87,6 @@ func (conf *Config) APIURL() *url.URL {
 	return &url.URL{
 		Scheme: Configuration.Scheme,
 		Host:   host,
-	}
-}
-
-// NERDZURL returns the NERDZ URL, with https protocol
-func (conf *Config) NERDZURL() *url.URL {
-	return &url.URL{
-		Scheme: "https",
-		Host:   Configuration.NERDZHost,
 	}
 }
 

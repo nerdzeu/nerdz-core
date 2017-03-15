@@ -19,10 +19,10 @@ package db
 
 import (
 	"errors"
-	"fmt"
-	"github.com/galeone/igor"
-	"github.com/nerdzeu/nerdz-core/utils"
 	"time"
+
+	"github.com/galeone/igor"
+	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 const (
@@ -96,15 +96,8 @@ func (pm *Pm) SetText(message string) {
 }
 
 // SetLanguage set the language of the pm (useless)
-func (pm *Pm) SetLanguage(language string) error {
-	if language == "" {
-		language = pm.Sender().Language()
-	}
-	if utils.InSlice(language, Configuration.Languages) {
-		pm.Lang = language
-		return nil
-	}
-	return fmt.Errorf("Language '%s' is not a valid or supported language", language)
+func (pm *Pm) SetLanguage(language proto.Language) {
+	pm.Lang = dbLang[language]
 }
 
 // ClearDefaults set to the go's default values the fields with default sql values
@@ -120,8 +113,8 @@ func (pm *Pm) ID() uint64 {
 }
 
 // Language returns the message language
-func (pm *Pm) Language() string {
-	return pm.Lang
+func (pm *Pm) Language() proto.Language {
+	return protoLang[pm.Lang]
 }
 
 // NumericSender returns the id of the sender user

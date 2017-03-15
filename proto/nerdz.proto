@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "proto";
+
+package nerdz;
+
+enum Language {
+    ENGLISH = 0;
+    ITALIAN = 1;
+    CROATIAN = 2;
+    GERMAN = 3;
+    PORTUGUESE = 4;
+    ROMANIAN = 5;
+}
