@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (C) 2016 Paolo Galeone <nessuno@nerdz.eu>
 
 This program is free software: you can redistribute it and/or modify
@@ -242,7 +242,7 @@ func (post *UserPost) NumericBookmarkers() (bookmarkers []uint64) {
 	return
 }
 
-// Bookmarks returns a slice of users that bookmarked the post
+// Bookmarkers returns a slice of users that bookmarked the post
 func (post *UserPost) Bookmarkers() []*User {
 	return Users(post.NumericBookmarkers())
 }
