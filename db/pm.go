@@ -69,7 +69,7 @@ func NewPm(pmid uint64) (*Pm, error) {
 // NewPmWhere returns the *Pm fetching the first one that matches the description
 func NewPmWhere(description *Pm) (pm *Pm, e error) {
 	pm = new(Pm)
-	if e = Db().Model(Pm{}).Where(description).Scan(pm); e != nil {
+	if e = db().Model(Pm{}).Where(description).Scan(pm); e != nil {
 		return nil, e
 	}
 	if pm.Pmid == 0 {

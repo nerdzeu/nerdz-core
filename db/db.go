@@ -18,51 +18,90 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package db
 
 import (
-	"flag"
-	"fmt"
+	"bytes"
+	"errors"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/galeone/igor"
+	"github.com/spf13/viper"
 )
 
-var db *igor.Database
+var dbInst *igor.Database
 
-// This is the first method called. Parse the configuration file, populate the environment values and create the connection to the db
-func init() {
-	flag.Parse()
-	args := flag.Args()
-	envVar := os.Getenv("CONF_FILE")
-
-	var file string
-	if len(args) == 1 {
-		file = args[0]
-	} else if envVar != "" {
-		file = envVar
-	} else {
-		panic(fmt.Sprintln("Configuration file is required.\nUse: CONF_FILE environment variable or cli args"))
+// Init initialises the internal Database instance.
+// Using the package before calling Init will cause the application to panic.
+func Init() error {
+	connectionString, err := connectionString()
+	if err != nil {
+		return err
 	}
 
-	var err error
-
-	if err = initConfiguration(file); err != nil {
-		panic(fmt.Sprintf("[!] %v\n", err))
-	}
-
-	var connectionString string
-	if connectionString, err = Configuration.ConnectionString(); err != nil {
-		panic(err.Error())
-	}
-
-	if db, err = igor.Connect(connectionString); err != nil {
-		panic(fmt.Sprintf("Got error when connect database: '%v'\n", err))
+	if dbInst, err = igor.Connect(connectionString); err != nil {
+		return err
 	}
 
 	logger := log.New(os.Stdout, "query-logger: ", log.LUTC)
-	Db().Log(logger)
+	dbInst.Log(logger)
+
+	return nil
 }
 
-// Db returns the *igor.Database
-func Db() *igor.Database {
-	return db
+// connectionString uses viper to access the database configuration, to create a global db instance.
+func connectionString() (string, error) {
+	setDefaults()
+
+	username := viper.GetString(unameKey)
+	if username == "" {
+		return "", errors.New("empty database username")
+	}
+
+	name := viper.GetString(dbKey)
+	if name == "" {
+		return "", errors.New("Empty db name")
+	}
+
+	var ret bytes.Buffer
+	ret.WriteString("user=" + username + " dbname=" + name + " host=" + viper.GetString(hostKey))
+
+	passwd := viper.GetString(passKey)
+
+	if passwd != "" {
+		ret.WriteString(" password=" + passwd)
+	}
+
+	ret.WriteString(" sslmode=" + viper.GetString(sslKey))
+
+	ret.WriteString(" port=" + strconv.Itoa(viper.GetInt(portKey)))
+
+	return ret.String(), nil
+}
+
+// db is used by this package to access an *igor.Database
+func db() *igor.Database {
+	if dbInst == nil {
+		panic("db not yet initialised")
+	}
+
+	return dbInst
+}
+
+const (
+	viperScope = "db."
+
+	unameKey = viperScope + "user"
+	dbKey    = viperScope + "name"
+	hostKey  = viperScope + "host"
+	passKey  = viperScope + "password"
+	portKey  = viperScope + "port"
+	sslKey   = viperScope + "ssl"
+)
+
+// setDefaults sets into viper the default values to access the database.
+// This packages namespaces each one of its keys with 'db.'.
+func setDefaults() {
+	viper.SetDefault(hostKey, "localhost")
+	viper.SetDefault(portKey, 5432)
+	viper.SetDefault(sslKey, "disable")
 }

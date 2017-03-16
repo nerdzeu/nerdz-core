@@ -33,7 +33,7 @@ func NewProjectPost(hpid uint64) (*ProjectPost, error) {
 // NewProjectPostWhere returns the *ProjectPost fetching the first one that matches the description
 func NewProjectPostWhere(description *ProjectPost) (post *ProjectPost, e error) {
 	post = new(ProjectPost)
-	if e = Db().Model(ProjectPost{}).Where(description).Scan(post); e != nil {
+	if e = db().Model(ProjectPost{}).Where(description).Scan(post); e != nil {
 		return nil, e
 	}
 	if post.ID() == 0 {
@@ -134,26 +134,26 @@ func (post *ProjectPost) Language() proto.Language {
 
 // Revisions returns all the revisions of the message
 func (post *ProjectPost) Revisions() (modifications []string) {
-	Db().Model(ProjectPostRevision{}).Where(&ProjectPostRevision{Hpid: post.ID()}).Pluck("message", &modifications)
+	db().Model(ProjectPostRevision{}).Where(&ProjectPostRevision{Hpid: post.ID()}).Pluck("message", &modifications)
 	return
 }
 
 // RevisionsNumber returns the number of the revisions
 func (post *ProjectPost) RevisionsNumber() (count uint8) {
-	Db().Model(ProjectPostRevision{}).Where(&ProjectPostRevision{Hpid: post.ID()}).Count(&count)
+	db().Model(ProjectPostRevision{}).Where(&ProjectPostRevision{Hpid: post.ID()}).Count(&count)
 	return
 }
 
 // Votes returns the post's votes value
 func (post *ProjectPost) VotesCount() (sum int) {
-	Db().Model(ProjectPostVote{}).Select("COALESCE(sum(vote), 0)").Where(&ProjectPostVote{Hpid: post.ID()}).Scan(&sum)
+	db().Model(ProjectPostVote{}).Select("COALESCE(sum(vote), 0)").Where(&ProjectPostVote{Hpid: post.ID()}).Scan(&sum)
 	return
 }
 
 // Votes returns a pointer to a slice of Vote
 func (post *ProjectPost) Votes() *[]Vote {
 	ret := []ProjectPostVote{}
-	Db().Model(ProjectPostVote{}).Where(&ProjectPostVote{Hpid: post.ID()}).Scan(&ret)
+	db().Model(ProjectPostVote{}).Where(&ProjectPostVote{Hpid: post.ID()}).Scan(&ret)
 	var retVotes []Vote
 	for _, v := range ret {
 		vote := v
@@ -166,7 +166,7 @@ func (post *ProjectPost) Votes() *[]Vote {
 // Bookmarks returns a pointer to a slice of Bookmark
 func (post *ProjectPost) Bookmarks() *[]Bookmark {
 	ret := []ProjectPostBookmark{}
-	Db().Model(ProjectPostBookmark{}).Where(&ProjectPostBookmark{Hpid: post.ID()}).Scan(&ret)
+	db().Model(ProjectPostBookmark{}).Where(&ProjectPostBookmark{Hpid: post.ID()}).Scan(&ret)
 	var retBookmarks []Bookmark
 	for _, b := range ret {
 		bookmark := b
@@ -179,7 +179,7 @@ func (post *ProjectPost) Bookmarks() *[]Bookmark {
 // Lurks returns a pointer to a slice of Lurk
 func (post *ProjectPost) Lurks() *[]Lurk {
 	ret := []ProjectPostLurk{}
-	Db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Scan(&ret)
+	db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Scan(&ret)
 	var retLurkers []Lurk
 	for _, l := range ret {
 		lurker := l
@@ -192,7 +192,7 @@ func (post *ProjectPost) Lurks() *[]Lurk {
 // Locks returns a pointer to a slice of Lock
 func (post *ProjectPost) Locks() *[]Lock {
 	ret := []ProjectPostLock{}
-	Db().Model(ProjectPostLock{}).Where(&ProjectPostLock{Hpid: post.ID()}).Scan(&ret)
+	db().Model(ProjectPostLock{}).Where(&ProjectPostLock{Hpid: post.ID()}).Scan(&ret)
 	var retLockers []Lock
 	for _, l := range ret {
 		locker := l
@@ -207,7 +207,7 @@ func (post *ProjectPost) Locks() *[]Lock {
 func (post *ProjectPost) Comments(options CommentlistOptions) *[]ExistingComment {
 	var comments []ProjectPostComment
 
-	query := Db().Where(&ProjectPostComment{Hpid: post.ID()})
+	query := db().Where(&ProjectPostComment{Hpid: post.ID()})
 	query = commentlistQueryBuilder(query, options)
 	query.Scan(&comments)
 
@@ -223,7 +223,7 @@ func (post *ProjectPost) Comments(options CommentlistOptions) *[]ExistingComment
 
 // CommentsCount returns the number of comment's post
 func (post *ProjectPost) CommentsCount() (count uint8) {
-	Db().Model(ProjectPostComment{}).Where(&ProjectPostComment{Hpid: post.ID()}).Count(&count)
+	db().Model(ProjectPostComment{}).Where(&ProjectPostComment{Hpid: post.ID()}).Count(&count)
 	return
 }
 
@@ -239,7 +239,7 @@ func (*ProjectPost) Type() string {
 
 // NumericBookmarkers returns a slice of uint64 representing the ids of the users that bookmarked the post
 func (post *ProjectPost) NumericBookmarkers() (bookmarkers []uint64) {
-	Db().Model(ProjectPostBookmark{}).Where(&ProjectPostBookmark{Hpid: post.ID()}).Pluck(`"from"`, &bookmarkers)
+	db().Model(ProjectPostBookmark{}).Where(&ProjectPostBookmark{Hpid: post.ID()}).Pluck(`"from"`, &bookmarkers)
 	return
 }
 
@@ -250,13 +250,13 @@ func (post *ProjectPost) Bookmarkers() []*User {
 
 // BookmarksCount returns the number of users that bookmarked the post
 func (post *ProjectPost) BookmarksCount() (count uint8) {
-	Db().Model(ProjectPostBookmark{}).Where(&ProjectPostBookmark{Hpid: post.ID()}).Count(&count)
+	db().Model(ProjectPostBookmark{}).Where(&ProjectPostBookmark{Hpid: post.ID()}).Count(&count)
 	return
 }
 
 // NumericLurkers returns a slice of uint64 representing the ids of the users that lurked the post
 func (post *ProjectPost) NumericLurkers() (lurkers []uint64) {
-	Db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Pluck(`"from"`, &lurkers)
+	db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Pluck(`"from"`, &lurkers)
 	return
 }
 
@@ -267,6 +267,6 @@ func (post *ProjectPost) Lurkers() []*User {
 
 // LurkersCount returns the number of users that are lurking the post
 func (post *ProjectPost) LurkersCount() (count uint8) {
-	Db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Count(&count)
+	db().Model(ProjectPostLurk{}).Where(&ProjectPostLurk{Hpid: post.ID()}).Count(&count)
 	return
 }

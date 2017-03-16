@@ -32,7 +32,7 @@ func NewUserPostComment(hcid uint64) (comment *UserPostComment, e error) {
 // NewUserPostCommentWhere returns the *UserPostComment fetching the first one that matches the description
 func NewUserPostCommentWhere(description *UserPostComment) (comment *UserPostComment, e error) {
 	comment = new(UserPostComment)
-	if e = Db().Model(UserPostComment{}).Where(description).Scan(comment); e != nil {
+	if e = db().Model(UserPostComment{}).Where(description).Scan(comment); e != nil {
 		return nil, e
 	}
 	if comment.Hcid == 0 {
@@ -67,14 +67,14 @@ func (comment *UserPostComment) Reference() Reference {
 
 // Votes returns the post's votes value
 func (comment *UserPostComment) VotesCount() (sum int) {
-	Db().Model(UserPostCommentVote{}).Select("COALESCE(sum(vote), 0)").Where(&UserPostCommentVote{Hcid: comment.Hcid}).Scan(&sum)
+	db().Model(UserPostCommentVote{}).Select("COALESCE(sum(vote), 0)").Where(&UserPostCommentVote{Hcid: comment.Hcid}).Scan(&sum)
 	return
 }
 
 // Votes returns a pointer to a slice of Vote
 func (comment *UserPostComment) Votes() *[]Vote {
 	ret := []UserPostCommentVote{}
-	Db().Model(UserPostCommentVote{}).Where(&UserPostCommentVote{Hcid: comment.Hcid}).Scan(&ret)
+	db().Model(UserPostCommentVote{}).Where(&UserPostCommentVote{Hcid: comment.Hcid}).Scan(&ret)
 	var retVotes []Vote
 	for _, v := range ret {
 		vote := v
@@ -154,12 +154,12 @@ func (comment *UserPostComment) Owners() []*User {
 
 // Revisions returns all the revisions of the message
 func (comment *UserPostComment) Revisions() (modifications []string) {
-	Db().Model(UserPostCommentRevision{}).Where(&UserPostCommentRevision{Hcid: comment.Hcid}).Pluck("message", &modifications)
+	db().Model(UserPostCommentRevision{}).Where(&UserPostCommentRevision{Hcid: comment.Hcid}).Pluck("message", &modifications)
 	return
 }
 
 // RevisionsNumber returns the number of the revisions
 func (comment *UserPostComment) RevisionsNumber() (count uint8) {
-	Db().Model(UserPostCommentRevision{}).Where(&UserPostCommentRevision{Hcid: comment.Hcid}).Count(&count)
+	db().Model(UserPostCommentRevision{}).Where(&UserPostCommentRevision{Hcid: comment.Hcid}).Count(&count)
 	return
 }

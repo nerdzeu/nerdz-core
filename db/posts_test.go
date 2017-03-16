@@ -19,7 +19,6 @@ package db_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/nerdzeu/nerdz-core/db"
@@ -184,15 +183,5 @@ func TestLurkers(t *testing.T) {
 	n = projectPost.LurkersCount()
 	if 0 != n {
 		t.Fatalf("LurkersCount returned %d instead of 0", n)
-	}
-}
-
-func TestURL(t *testing.T) {
-	if !strings.HasSuffix(projectPost.URL().String(), "/NERDZilla:1") {
-		t.Fatalf("URL returned %s instead of Configuration.NERDZHost/NERDZilla:1", projectPost.URL().String())
-	}
-
-	if !strings.HasSuffix(userPost.URL().String(), "/admin.5") {
-		t.Fatalf("URL returned %s insted of Configuration.NERDZHost/admin.5", userPost.URL().String())
 	}
 }

@@ -49,7 +49,7 @@ func NewProject(id uint64) (*Project, error) {
 // NewProjectWhere returns the first user that matches the description
 func NewProjectWhere(description *Project) (project *Project, e error) {
 	project = new(Project)
-	if e = Db().Where(description).Scan(project); e != nil {
+	if e = db().Where(description).Scan(project); e != nil {
 		return
 	}
 	return
@@ -59,13 +59,13 @@ func NewProjectWhere(description *Project) (project *Project, e error) {
 
 // NumericFollowers returns a slice containing the IDs of users that followed this project
 func (prj *Project) NumericFollowers() (followers []uint64) {
-	Db().Model(ProjectFollower{}).Where(ProjectFollower{To: prj.ID()}).Pluck(`"from"`, &followers)
+	db().Model(ProjectFollower{}).Where(ProjectFollower{To: prj.ID()}).Pluck(`"from"`, &followers)
 	return
 }
 
 // NumericMembers returns a slice containing the IDs of users that are member of this project
 func (prj *Project) NumericMembers() (members []uint64) {
-	Db().Model(ProjectMember{}).Where(ProjectMember{To: prj.ID()}).Pluck(`"from"`, &members)
+	db().Model(ProjectMember{}).Where(ProjectMember{To: prj.ID()}).Pluck(`"from"`, &members)
 	return
 }
 
@@ -83,7 +83,7 @@ func (prj *Project) Members() []*User {
 
 // NumericOwner returns the Id of the owner of the project
 func (prj *Project) NumericOwner() (owner uint64) {
-	Db().Model(ProjectOwner{}).Select(`"from"`).Where(ProjectOwner{To: prj.ID()}).Scan(&owner)
+	db().Model(ProjectOwner{}).Select(`"from"`).Where(ProjectOwner{To: prj.ID()}).Scan(&owner)
 	return
 }
 
@@ -140,7 +140,7 @@ func (prj *Project) Postlist(options PostlistOptions) *[]ExistingPost {
 	projectPosts := projectPost.TableName()
 	users := new(User).TableName()
 
-	query := Db().Model(projectPost).Order("hpid DESC").
+	query := db().Model(projectPost).Order("hpid DESC").
 		Joins("JOIN "+users+" ON "+users+".counter = "+projectPosts+".to"). //PostListOptions.Language support
 		Where(`"to" = ?`, prj.ID())
 

@@ -32,7 +32,7 @@ func NewProjectPostComment(hcid uint64) (comment *ProjectPostComment, e error) {
 // NewProjectPostCommentWhere returns the *ProjectPostComment fetching the first one that matches the description
 func NewProjectPostCommentWhere(description *ProjectPostComment) (comment *ProjectPostComment, e error) {
 	comment = new(ProjectPostComment)
-	if e = Db().Model(ProjectPostComment{}).Where(description).Scan(comment); e != nil {
+	if e = db().Model(ProjectPostComment{}).Where(description).Scan(comment); e != nil {
 		return nil, e
 	}
 	if comment.Hcid == 0 {
@@ -67,14 +67,14 @@ func (comment *ProjectPostComment) Sender() *User {
 
 // Votes returns the post's votes value
 func (comment *ProjectPostComment) VotesCount() (sum int) {
-	Db().Model(ProjectPostCommentVote{}).Select("COALESCE(sum(vote), 0)").Where(&ProjectPostCommentVote{Hcid: comment.Hcid}).Scan(&sum)
+	db().Model(ProjectPostCommentVote{}).Select("COALESCE(sum(vote), 0)").Where(&ProjectPostCommentVote{Hcid: comment.Hcid}).Scan(&sum)
 	return
 }
 
 // Votes returns a pointer to a slice of Vote
 func (comment *ProjectPostComment) Votes() *[]Vote {
 	ret := []ProjectPostCommentVote{}
-	Db().Model(ProjectPostCommentVote{}).Where(&ProjectPostCommentVote{Hcid: comment.Hcid}).Scan(&ret)
+	db().Model(ProjectPostCommentVote{}).Where(&ProjectPostCommentVote{Hcid: comment.Hcid}).Scan(&ret)
 	var retVotes []Vote
 	for _, v := range ret {
 		vote := v
@@ -156,12 +156,12 @@ func (comment *ProjectPostComment) Owners() []*User {
 
 // Revisions returns all the revisions of the message
 func (comment *ProjectPostComment) Revisions() (modifications []string) {
-	Db().Model(ProjectPostCommentRevision{}).Where(&ProjectPostCommentRevision{Hcid: comment.Hcid}).Pluck("message", &modifications)
+	db().Model(ProjectPostCommentRevision{}).Where(&ProjectPostCommentRevision{Hcid: comment.Hcid}).Pluck("message", &modifications)
 	return
 }
 
 // RevisionsNumber returns the number of the revisions
 func (comment *ProjectPostComment) RevisionsNumber() (count uint8) {
-	Db().Model(ProjectPostCommentRevision{}).Where(&ProjectPostCommentRevision{Hcid: comment.Hcid}).Count(&count)
+	db().Model(ProjectPostCommentRevision{}).Where(&ProjectPostCommentRevision{Hcid: comment.Hcid}).Count(&count)
 	return
 }
