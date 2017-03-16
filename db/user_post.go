@@ -121,7 +121,7 @@ func (post *UserPost) Owners() (ret []*User) {
 	return Users(post.NumericOwners())
 }
 
-// Votes returns the post's votes value
+// VotesCount returns the post's votes value
 func (post *UserPost) VotesCount() (sum int) {
 	Db().Model(UserPostVote{}).Select("COALESCE(sum(vote), 0)").Where(&UserPostVote{Hpid: post.ID()}).Scan(&sum)
 	return

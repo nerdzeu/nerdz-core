@@ -677,9 +677,9 @@ func (user *User) Unlurk(post ExistingPost) error {
 	return errors.New("invalid post type " + reflect.TypeOf(post).String())
 }
 
-// Lock lockes the specified post. If users are present, indiidual notifications
+// LockPost lockes the specified post. If users are present, indiidual notifications
 // are disabled from the user presents in the users list.
-func (user *User) Lock(post ExistingPost, users ...*User) (*[]Lock, error) {
+func (user *User) LockPost(post ExistingPost, users ...*User) (*[]Lock, error) {
 	if post == nil {
 		return nil, errors.New("unable to lurk undefined post")
 	}
