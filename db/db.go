@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/galeone/igor"
 	"github.com/spf13/viper"
@@ -48,9 +49,23 @@ func Init() error {
 	return nil
 }
 
+// bindEnv parses and loads into viper config env variables, if present
+func bindEnv() {
+	viper.SetEnvPrefix("nerdz")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	viper.BindEnv(unameKey)
+	viper.BindEnv(dbKey)
+	viper.BindEnv(hostKey)
+	viper.BindEnv(passKey)
+	viper.BindEnv(portKey)
+	viper.BindEnv(sslKey)
+}
+
 // connectionString uses viper to access the database configuration, to create a global db instance.
 func connectionString() (string, error) {
 	setDefaults()
+	bindEnv()
 
 	username := viper.GetString(unameKey)
 	if username == "" {

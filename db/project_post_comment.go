@@ -20,8 +20,6 @@ package db
 import (
 	"fmt"
 	"time"
-
-	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // NewProjectPostComment initializes a ProjectPostComment struct
@@ -130,13 +128,14 @@ func (comment *ProjectPostComment) SetText(message string) {
 }
 
 // SetLanguage set the language of the comment
-func (comment *ProjectPostComment) SetLanguage(language proto.Language) {
-	comment.Lang = dbLang[language]
+func (comment *ProjectPostComment) SetLanguage(language string) error {
+	comment.Lang = language
+	return nil
 }
 
 // Language returns the message language
-func (comment *ProjectPostComment) Language() proto.Language {
-	return protoLang[comment.Lang]
+func (comment *ProjectPostComment) Language() string {
+	return comment.Lang
 }
 
 // IsEditable returns true if the comment is editable

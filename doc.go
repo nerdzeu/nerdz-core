@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Package main is the entrypoint for the the Nerdz Core service.
 //
-// Nerdz Core is the basic data layer for the Nerdz platform, providing authentication and 
+// Nerdz Core is the basic data layer for the Nerdz platform, providing authentication and
 // data management to its clients.
 package main
+
+//go:generate protoc -I proto proto/nerdz.proto --go_out=plugins=grpc:proto

@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/galeone/igor"
-	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 const (
@@ -62,14 +61,14 @@ type Conversation struct {
 }
 
 // NewPm initializes a Pm struct
-func NewPm(pmid uint64) (*Pm, error) {
-	return NewPmWhere(&Pm{Pmid: pmid})
+func NewPm(pmid uint64) (*PM, error) {
+	return NewPmWhere(&PM{Pmid: pmid})
 }
 
 // NewPmWhere returns the *Pm fetching the first one that matches the description
-func NewPmWhere(description *Pm) (pm *Pm, e error) {
-	pm = new(Pm)
-	if e = db().Model(Pm{}).Where(description).Scan(pm); e != nil {
+func NewPmWhere(description *PM) (pm *PM, e error) {
+	pm = new(PM)
+	if e = db().Model(PM{}).Where(description).Scan(pm); e != nil {
 		return nil, e
 	}
 	if pm.Pmid == 0 {
@@ -81,100 +80,101 @@ func NewPmWhere(description *Pm) (pm *Pm, e error) {
 // Implementing newMessage interface
 
 // SetSender sets the source of the pm (the user ID)
-func (pm *Pm) SetSender(id uint64) {
+func (pm *PM) SetSender(id uint64) {
 	pm.From = id
 }
 
 // SetReference sets the destionation of the pm: user ID
-func (pm *Pm) SetReference(id uint64) {
+func (pm *PM) SetReference(id uint64) {
 	pm.To = id
 }
 
 // SetText set the text of the message
-func (pm *Pm) SetText(message string) {
+func (pm *PM) SetText(message string) {
 	pm.Message = message
 }
 
 // SetLanguage set the language of the pm (useless)
-func (pm *Pm) SetLanguage(language proto.Language) {
-	pm.Lang = dbLang[language]
+func (pm *PM) SetLanguage(language string) error {
+	pm.Lang = language
+	return nil
 }
 
 // ClearDefaults set to the go's default values the fields with default sql values
-func (pm *Pm) ClearDefaults() {
+func (pm *PM) ClearDefaults() {
 	pm.Time = time.Time{}
 }
 
 // Implementing existingMessage interface
 
 // ID returns the User Post ID
-func (pm *Pm) ID() uint64 {
+func (pm *PM) ID() uint64 {
 	return pm.Pmid
 }
 
 // Language returns the message language
-func (pm *Pm) Language() proto.Language {
-	return protoLang[pm.Lang]
+func (pm *PM) Language() string {
+	return pm.Lang
 }
 
 // NumericSender returns the id of the sender user
-func (pm *Pm) NumericSender() uint64 {
+func (pm *PM) NumericSender() uint64 {
 	return pm.From
 }
 
 // Sender returns the sender *User
-func (pm *Pm) Sender() *User {
+func (pm *PM) Sender() *User {
 	user, _ := NewUser(pm.NumericSender())
 	return user
 }
 
 // NumericReference returns the id of the recipient user
-func (pm *Pm) NumericReference() uint64 {
+func (pm *PM) NumericReference() uint64 {
 	return pm.To
 }
 
 // Reference returns the recipient *User
-func (pm *Pm) Reference() Reference {
+func (pm *PM) Reference() Reference {
 	user, _ := NewUser(pm.NumericReference())
 	return user
 }
 
 // Text returns the pm message
-func (pm *Pm) Text() string {
+func (pm *PM) Text() string {
 	return pm.Message
 }
 
 // IsEditable returns true if the pm is editable
-func (pm *Pm) IsEditable() bool {
+func (pm *PM) IsEditable() bool {
 	return false
 }
 
 // NumericOwners returns a slice of ids of the owner of the pms (the ones that can perform actions)
-func (pm *Pm) NumericOwners() []uint64 {
+func (pm *PM) NumericOwners() []uint64 {
 	return []uint64{pm.To, pm.From}
 }
 
 // Owners returns a slice of *User representing the users who own the pm
-func (pm *Pm) Owners() (ret []*User) {
+func (pm *PM) Owners() (ret []*User) {
 	return Users(pm.NumericOwners())
 }
 
 // Revisions returns all the revisions of the message
-func (pm *Pm) Revisions() (modifications []string) {
+func (pm *PM) Revisions() (modifications []string) {
 	return
 }
 
 // RevisionsNumber returns the number of the revisions
-func (pm *Pm) RevisionsNumber() uint8 {
+func (pm *PM) RevisionsNumber() uint8 {
 	return 0
 }
 
 // Votes returns the pm's votes value
-func (pm *Pm) VotesCount() int {
+func (pm *PM) VotesCount() int {
 	return 0
 }
 
 // Voters returns a slice of *Vote representing the votes
-func (pm *Pm) Votes() (votes *[]Vote) {
+func (pm *PM) Votes() (votes *[]Vote) {
 	return
 }

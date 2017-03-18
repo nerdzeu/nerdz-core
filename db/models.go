@@ -19,8 +19,9 @@ package db
 
 import (
 	"database/sql"
-	"github.com/galeone/igor"
 	"time"
+
+	"github.com/galeone/igor"
 )
 
 // Enrich models structure with unexported types
@@ -382,8 +383,8 @@ func (UserPostBookmark) TableName() string {
 	return "bookmarks"
 }
 
-// Pm is the model for the relation pms
-type Pm struct {
+// PM is the model for the relation pms
+type PM struct {
 	Pmid    uint64 `igor:"primary_key"`
 	From    uint64
 	To      uint64
@@ -394,7 +395,7 @@ type Pm struct {
 }
 
 // TableName returns the table name associated with the structure
-func (Pm) TableName() string {
+func (PM) TableName() string {
 	return "pms"
 }
 
@@ -440,7 +441,6 @@ type ProjectOwner struct {
 	Counter  uint64 `igor:"primary_key"`
 }
 
-// GetTO returns its Transfer Object
 // TableName returns the table name associated with the structure
 func (ProjectOwner) TableName() string {
 	return "groups_owners"

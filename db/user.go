@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nerdzeu/nerdz-core/proto"
 	"github.com/nerdzeu/nerdz-core/utils"
 )
 
@@ -200,7 +199,7 @@ func (user *User) ContactInfo() *ContactInfo {
 // BoardInfo returns a *BoardInfo struct
 func (user *User) BoardInfo() *BoardInfo {
 	return &BoardInfo{
-		Language:  protoLang[user.BoardLang],
+		Language:  user.BoardLang,
 		IsClosed:  user.Profile.Closed,
 		Private:   user.Private,
 		Whitelist: user.Whitelist()}
@@ -307,10 +306,10 @@ func (user *User) Home(options PostlistOptions) *[]Message {
 }
 
 // Pms returns a slice of Pm, representing the list of the last messages exchanged with other users
-func (user *User) Pms(otherUser uint64, options PmsOptions) (*[]Pm, error) {
-	var pms []Pm
+func (user *User) Pms(otherUser uint64, options PmsOptions) (*[]PM, error) {
+	var pms []PM
 
-	query := db().Model(Pm{}).Where(
+	query := db().Model(PM{}).Where(
 		`("from" = ? AND "to" = ?) OR ("from" = ? AND "to" = ?)`,
 		user.ID(), otherUser, otherUser, user.ID())
 	// build query in function of parameters
@@ -322,7 +321,7 @@ func (user *User) Pms(otherUser uint64, options PmsOptions) (*[]Pm, error) {
 
 // Vote express a positive/negative preference for a post or comment.
 // Returns the vote if everything went ok
-func (user *User) Vote(message existingMessage, vote int8) (Vote, error) {
+func (user *User) Vote(message Content, vote int8) (Vote, error) {
 	method := db().Create
 	if vote > 0 {
 		vote = 1
@@ -332,6 +331,7 @@ func (user *User) Vote(message existingMessage, vote int8) (Vote, error) {
 	} else {
 		vote = -1
 	}
+
 	var err error
 	switch message.(type) {
 	case *UserPost:
@@ -358,7 +358,7 @@ func (user *User) Vote(message existingMessage, vote int8) (Vote, error) {
 		err = method(&dbVote)
 		return &dbVote, err
 
-	case *Pm:
+	case *PM:
 		return nil, fmt.Errorf("TODO(galeone): No preference for private message")
 	}
 
@@ -390,7 +390,7 @@ func (user *User) Conversations() (*[]Conversation, error) {
 
 // DeleteConversation deletes the conversation of user with other user
 func (user *User) DeleteConversation(other uint64) error {
-	return db().Where(`("from" = ? AND "to" = ?) OR ("from" = ? AND "to" = ?)`, user.ID(), other, other, user.ID()).Delete(&Pm{})
+	return db().Where(`("from" = ? AND "to" = ?) OR ("from" = ? AND "to" = ?)`, user.ID(), other, other, user.ID()).Delete(&PM{})
 }
 
 //Implements Board interface
@@ -433,423 +433,4 @@ func (user *User) Postlist(options PostlistOptions) *[]ExistingPost {
 	}
 
 	return &retPosts
-}
-
-// User actions
-
-// Add a newMessage
-func (user *User) Add(message newMessage) error {
-	switch message.(type) {
-	case *UserPost:
-		post := message.(*UserPost)
-		if post.To == 0 {
-			post.To = user.ID()
-		}
-		if err := createMessage(post, user.ID(), post.To, post.Text(), post.Language()); err != nil {
-			return err
-		}
-
-		return db().Create(post)
-
-	case *ProjectPost:
-		post := message.(*ProjectPost)
-		if err := createMessage(post, user.ID(), post.To, post.Text(), post.Language()); err != nil {
-			return err
-		}
-
-		return db().Create(post)
-
-	case *UserPostComment:
-		comment := message.(*UserPostComment)
-		if err := createMessage(comment, user.ID(), comment.Hpid, comment.Text(), comment.Language()); err != nil {
-			return err
-		}
-
-		return db().Create(comment)
-
-	case *ProjectPostComment:
-		comment := message.(*ProjectPostComment)
-		if err := createMessage(comment, user.ID(), comment.Hpid, comment.Text(), comment.Language()); err != nil {
-			return err
-		}
-
-		return db().Create(comment)
-
-	case *Pm:
-		pm := message.(*Pm)
-		if err := createMessage(pm, user.ID(), pm.To, pm.Text(), pm.Language()); err != nil {
-			return err
-		}
-		return db().Create(pm)
-	}
-
-	return fmt.Errorf("invalid parameter type: %s", reflect.TypeOf(message))
-}
-
-// Delete an existing message
-func (user *User) Delete(message existingMessage) error {
-	if user.CanDelete(message) {
-		return db().Delete(message)
-	}
-	return errors.New("you can't delete this message")
-}
-
-// Edit an existing message
-func (user *User) Edit(message editingMessage) error {
-	if user.CanEdit(message) {
-		rollBackText := message.Text() //unencoded
-		if err := updateMessage(message); err != nil {
-			message.SetText(rollBackText)
-			return err
-		}
-		if err := db().Updates(message); err != nil {
-			message.SetText(rollBackText)
-			return err
-		}
-		return nil
-	}
-	return errors.New("you can't edit this message")
-}
-
-// Follow creates a new "follow" relationship between the current user
-// and another NERDZ board. The board could represent a NERDZ's project
-// or another NERDZ's user.
-func (user *User) Follow(board Board) error {
-	if board == nil {
-		return errors.New("unable to follow an undefined board")
-	}
-
-	switch board.(type) {
-	case *User:
-		otherUser := board.(*User)
-		return db().Create(&UserFollower{From: user.ID(), To: otherUser.ID()})
-
-	case *Project:
-		otherProj := board.(*Project)
-		return db().Create(&ProjectFollower{From: user.ID(), To: otherProj.ID()})
-
-	}
-
-	return errors.New("invalid follower type " + reflect.TypeOf(board).String())
-}
-
-// WhitelistUser add other user to the user whitelist
-func (user *User) WhitelistUser(other *User) error {
-	if other == nil {
-		return errors.New("Other user should be a vaid user")
-	}
-	return db().Create(&Whitelist{From: user.ID(), To: other.ID()})
-}
-
-// UnwhitelistUser removes other user to the user whitelist
-func (user *User) UnwhitelistUser(other *User) error {
-	if other == nil {
-		return errors.New("Other user should be a vaid user")
-	}
-	return db().Where(&Whitelist{From: user.ID(), To: other.ID()}).Delete(Whitelist{})
-}
-
-// BlacklistUser add other user to the user blacklist
-func (user *User) BlacklistUser(other *User, motivation string) error {
-	if other == nil {
-		return errors.New("Other user should be a vaid user")
-	}
-	return db().Create(&Blacklist{From: user.ID(), To: other.ID(), Motivation: motivation})
-}
-
-// UnblacklistUser removes other user to the user blacklist
-func (user *User) UnblacklistUser(other *User) error {
-	if other == nil {
-		return errors.New("Other user should be a vaid user")
-	}
-	return db().Where(&Blacklist{From: user.ID(), To: other.ID()}).Delete(Blacklist{})
-}
-
-// Unfollow delete a "follow" relationship between the current user
-// and another NERDZ board. The board could represent a NERDZ's project
-// or another NERDZ's user.
-func (user *User) Unfollow(board Board) error {
-	if board == nil {
-		return errors.New("unable to unfollow an undefined board")
-	}
-
-	switch board.(type) {
-	case *User:
-		otherUser := board.(*User)
-		return db().Where(&UserFollower{From: user.ID(), To: otherUser.ID()}).Delete(UserFollower{})
-
-	case *Project:
-		otherProj := board.(*Project)
-		return db().Where(&ProjectFollower{From: user.ID(), To: otherProj.ID()}).Delete(ProjectFollower{})
-
-	}
-
-	return errors.New("invalid follower type " + reflect.TypeOf(board).String())
-}
-
-// Bookmark bookmarks the specified post by a specific user. An error is returned if the
-// post isn't defined or if there are other errors returned by the
-// DBMS
-func (user *User) Bookmark(post ExistingPost) (Bookmark, error) {
-	if post == nil {
-		return nil, errors.New("unable to bookmark undefined post")
-	}
-
-	switch post.(type) {
-	case *UserPost:
-		userPost := post.(*UserPost)
-		bookmark := UserPostBookmark{From: user.ID(), Hpid: userPost.ID()}
-		err := db().Create(&bookmark)
-		return &bookmark, err
-
-	case *ProjectPost:
-		projectPost := post.(*ProjectPost)
-		bookmark := ProjectPostBookmark{From: user.ID(), Hpid: projectPost.ID()}
-		err := db().Create(&bookmark)
-		return &bookmark, err
-	}
-
-	return nil, errors.New("invalid post type " + reflect.TypeOf(post).String())
-}
-
-// Unbookmark the specified post by a specific user. An error is returned if the
-// post isn't defined or if there are other errors returned by the DBMS
-func (user *User) Unbookmark(post ExistingPost) error {
-	if post == nil {
-		return errors.New("unable to unbookmark undefined post")
-	}
-
-	switch post.(type) {
-	case *UserPost:
-		userPost := post.(*UserPost)
-		return db().Where(&UserPostBookmark{From: user.ID(), Hpid: userPost.ID()}).Delete(UserPostBookmark{})
-
-	case *ProjectPost:
-		projectPost := post.(*ProjectPost)
-		return db().Where(&ProjectPostBookmark{From: user.ID(), Hpid: projectPost.ID()}).Delete(ProjectPostBookmark{})
-	}
-
-	return errors.New("invalid post type " + reflect.TypeOf(post).String())
-}
-
-// Lurk lurkes the specified post by a specific user. An error is returned if the
-// post isn't defined or if there are other errors returned by the
-// DBMS
-func (user *User) Lurk(post ExistingPost) (Lurk, error) {
-	if post == nil {
-		return nil, errors.New("unable to lurk undefined post")
-	}
-
-	switch post.(type) {
-	case *UserPost:
-		userPost := post.(*UserPost)
-		lurk := UserPostLurk{From: user.ID(), Hpid: userPost.ID()}
-		err := db().Create(&lurk)
-		return &lurk, err
-
-	case *ProjectPost:
-		projectPost := post.(*ProjectPost)
-		lurk := ProjectPostLurk{From: user.ID(), Hpid: projectPost.ID()}
-		err := db().Create(&lurk)
-		return &lurk, err
-	}
-
-	return nil, errors.New("invalid post type " + reflect.TypeOf(post).String())
-}
-
-// Unlurk the specified post by a specific user. An error is returned if the
-// post isn't defined or if there are other errors returned by the DBMS
-func (user *User) Unlurk(post ExistingPost) error {
-	if post == nil {
-		return errors.New("unable to unlurk undefined post")
-	}
-
-	switch post.(type) {
-	case *UserPost:
-		userPost := post.(*UserPost)
-		return db().Where(&UserPostLurk{From: user.ID(), Hpid: userPost.ID()}).Delete(UserPostLurk{})
-
-	case *ProjectPost:
-		projectPost := post.(*ProjectPost)
-		return db().Where(&ProjectPostLurk{From: user.ID(), Hpid: projectPost.ID()}).Delete(ProjectPostLurk{})
-	}
-
-	return errors.New("invalid post type " + reflect.TypeOf(post).String())
-}
-
-// LockPost lockes the specified post. If users are present, indiidual notifications
-// are disabled from the user presents in the users list.
-func (user *User) LockPost(post ExistingPost, users ...*User) (*[]Lock, error) {
-	if post == nil {
-		return nil, errors.New("unable to lurk undefined post")
-	}
-
-	switch post.(type) {
-	case *UserPost:
-		userPost := post.(*UserPost)
-		if len(users) == 0 {
-			lock := UserPostLock{User: user.ID(), Hpid: userPost.ID()}
-			err := db().Create(&lock)
-			return &[]Lock{&lock}, err
-		}
-		var locks []Lock
-		for _, other := range users {
-			lock := UserPostUserLock{From: user.ID(), To: other.ID(), Hpid: userPost.ID()}
-			if err := db().Create(&lock); err != nil {
-				return nil, err
-			}
-			locks = append(locks, Lock(&lock))
-		}
-		return &locks, nil
-
-	case *ProjectPost:
-		projectPost := post.(*ProjectPost)
-		if len(users) == 0 {
-			projectPost := post.(*ProjectPost)
-			lock := ProjectPostLock{User: user.ID(), Hpid: projectPost.ID()}
-			err := db().Create(&lock)
-			return &[]Lock{&lock}, err
-		}
-		var locks []Lock
-		for _, other := range users {
-			lock := ProjectPostUserLock{From: user.ID(), To: other.ID(), Hpid: projectPost.ID()}
-			if err := db().Create(&lock); err != nil {
-				return nil, err
-			}
-			locks = append(locks, Lock(&lock))
-		}
-		return &locks, nil
-	}
-
-	return nil, errors.New("invalid post type " + reflect.TypeOf(post).String())
-}
-
-// Unlock the specified post by a specific user. An error is returned if the
-// post isn't defined or if there are other errors returned by the DBMS
-func (user *User) Unlock(post ExistingPost, users ...*User) error {
-	if post == nil {
-		return errors.New("unable to unlock undefined post")
-	}
-
-	switch post.(type) {
-	case *UserPost:
-		userPost := post.(*UserPost)
-		if len(users) == 0 {
-			return db().Where(&UserPostLock{User: user.ID(), Hpid: userPost.ID()}).Delete(UserPostLock{})
-		}
-		for _, other := range users {
-			err := db().Where(&UserPostUserLock{From: user.ID(), To: other.ID(), Hpid: userPost.ID()}).Delete(UserPostUserLock{})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-
-	case *ProjectPost:
-		projectPost := post.(*ProjectPost)
-		if len(users) == 0 {
-			return db().Where(&ProjectPostLock{User: user.ID(), Hpid: projectPost.ID()}).Delete(ProjectPostLock{})
-		}
-		for _, other := range users {
-			err := db().Where(&ProjectPostUserLock{From: user.ID(), To: other.ID(), Hpid: projectPost.ID()}).Delete(ProjectPostUserLock{})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	return errors.New("invalid post type " + reflect.TypeOf(post).String())
-}
-
-// AddInterest adds the specified interest. An error is returned if the
-// interests already exists or some DBMS contraint is violated
-func (user *User) AddInterest(interest *Interest) error {
-	interest.From = user.ID()
-	if interest.Value == "" {
-		return errors.New("invalid interest value: (empty)")
-	}
-	return db().Create(interest)
-}
-
-// DeleteInterest removes the specified interest (by its ID or its Value).
-func (user *User) DeleteInterest(interest *Interest) error {
-	var toDelete Interest
-	if interest.ID <= 0 {
-		if interest.Value == "" {
-			return errors.New("invalid interest ID and empty interest")
-		}
-		toDelete.Value = interest.Value
-	} else {
-		toDelete.ID = interest.ID
-	}
-
-	if interest.From != user.ID() {
-		return errors.New("you can't remove other user interests")
-	}
-
-	toDelete.From = interest.From
-
-	return db().Where(&toDelete).Delete(Interest{})
-}
-
-// Friends returns the current user's friends
-func (user *User) Friends() []*User {
-	return Users(user.NumericFriends())
-}
-
-// Implements Reference interface
-
-// ID returns the user ID
-func (user *User) ID() uint64 {
-	return user.Counter
-}
-
-// Language returns the user language
-func (user *User) Language() proto.Language {
-	return protoLang[user.Lang]
-}
-
-// Can* methods
-
-// CanEdit returns true if user can edit the editingMessage
-func (user *User) CanEdit(message editingMessage) bool {
-	return message.ID() > 0 && message.IsEditable() && utils.InSlice(user.ID(), message.NumericOwners())
-}
-
-// CanDelete returns true if user can delete the existingMessage
-func (user *User) CanDelete(message existingMessage) bool {
-	return message.ID() > 0 && utils.InSlice(user.ID(), message.NumericOwners())
-}
-
-// CanBookmark returns true if user haven't bookamrked to existingPost yet
-func (user *User) CanBookmark(message ExistingPost) bool {
-	return message.ID() > 0 && !utils.InSlice(user.ID(), message.NumericBookmarkers())
-}
-
-// CanLurk returns true if the user haven't lurked the existingPost yet
-func (user *User) CanLurk(message ExistingPost) bool {
-	return message.ID() > 0 && !utils.InSlice(user.ID(), message.NumericLurkers())
-}
-
-// CanComment returns true if the user can comment to the existingPost
-func (user *User) CanComment(message ExistingPost) bool {
-	return !utils.InSlice(user.ID(), message.Sender().NumericBlacklist()) && message.ID() > 0 && !message.IsClosed()
-}
-
-// CanSee returns true if the user can see the Board content
-func (user *User) CanSee(board Board) bool {
-	switch board.(type) {
-	case *User:
-		return !utils.InSlice(user.ID(), board.(*User).NumericBlacklist())
-
-	case *Project:
-		project := board.(*Project)
-		if project.Visible {
-			return true
-		}
-
-		return user.ID() == project.NumericOwner() || utils.InSlice(user.ID(), project.NumericMembers())
-	}
-	return false
 }

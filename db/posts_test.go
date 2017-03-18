@@ -24,17 +24,23 @@ import (
 	"github.com/nerdzeu/nerdz-core/db"
 )
 
-var userPost, userPost1 *db.UserPost
-var projectPost *db.ProjectPost
-var e error
+var (
+	userPost, userPost1 *db.UserPost
+	projectPost         *db.ProjectPost
+)
 
 func init() {
-	if projectPost, e = db.NewProjectPost(uint64(3)); e != nil {
-		panic(fmt.Sprintf("No error should happen when create existing post, but got: %+v", e))
+	err := db.Init()
+	if err != nil {
+		panic(err)
 	}
 
-	if userPost, e = db.NewUserPost(6); e != nil {
-		panic(fmt.Sprintf("No error should happen when create existing post, but got: %+v", e))
+	if projectPost, err = db.NewProjectPost(uint64(3)); err != nil {
+		panic(fmt.Sprintf("No error should happen when create existing post, but got: %+v", err))
+	}
+
+	if userPost, err = db.NewUserPost(6); err != nil {
+		panic(fmt.Sprintf("No error should happen when create existing post, but got: %+v", err))
 	}
 
 	userPost1, _ = db.NewUserPost(20)
@@ -62,7 +68,7 @@ func TestTo(t *testing.T) {
 	user := to.(*db.User)
 
 	if user.Counter != 1 {
-		t.Fatalf("Counter should be 1, but go: %d", user.Counter)
+		t.Fatalf("Counter should be 1, got: %d", user.Counter)
 	}
 
 	to = projectPost.Reference()
@@ -70,7 +76,7 @@ func TestTo(t *testing.T) {
 	project := to.(*db.Project)
 
 	if project.Counter != 3 {
-		t.Fatalf("Counter should be 3, but go: %d", project.Counter)
+		t.Fatalf("Counter should be 3, got: %d", project.Counter)
 	}
 
 	t.Logf("%+v\n", project)

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nerdzeu/nerdz-core/proto"
 	"github.com/nerdzeu/nerdz-core/utils"
 )
 
@@ -180,13 +179,15 @@ func (post *UserPost) Locks() *[]Lock {
 }
 
 // SetLanguage set the language of the post
-func (post *UserPost) SetLanguage(language proto.Language) {
-	post.Lang = dbLang[language]
+func (post *UserPost) SetLanguage(language string) error {
+	post.Lang = language
+
+	return nil
 }
 
 // Language returns the message language
-func (post *UserPost) Language() proto.Language {
-	return protoLang[post.Lang]
+func (post *UserPost) Language() string {
+	return post.Lang
 }
 
 // Revisions returns all the revisions of the message

@@ -19,8 +19,6 @@ package db
 
 import (
 	"net/url"
-
-	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // ProjectInfo is the struct that contains all the project's informations
@@ -165,6 +163,6 @@ func (prj *Project) ID() uint64 {
 }
 
 // Language returns the project language
-func (prj *Project) Language() proto.Language {
+func (prj *Project) Language() string {
 	return prj.Owner().Language()
 }

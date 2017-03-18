@@ -18,22 +18,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package db
 
 import (
-	"html"
-
 	"github.com/galeone/igor"
-	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // Type definitions for [comment, post, pm]
 
-// newMessage is the interface that wraps methods common to every new mesage
+// TextHolder represents a text-based type
+type TextHolder interface {
+	SetText(string)
+	Text() string
+}
+
+// Content represents a generic message used by Nerdz.
 // Implementations: (UserPost, ProjectPost, UserPostComment, ProjectPostComment, Pm)
-type newMessage interface {
+type Content interface {
+	igor.DBModel
+	Reference
+	TextHolder
+
 	SetSender(uint64)
 	SetReference(uint64)
-	SetText(string)
-	SetLanguage(proto.Language)
+	SetLanguage(string) error
 	ClearDefaults()
+
+	Sender() *User
+	NumericSender() uint64
+	Reference() Reference
+	NumericReference() uint64
+	IsEditable() bool
+	NumericOwners() []uint64
+	Owners() []*User
+	Revisions() []string
+	RevisionsNumber() uint8
+	VotesCount() int
+	Votes() *[]Vote
 }
 
 // Reference represents a reference.
@@ -41,7 +59,7 @@ type newMessage interface {
 // A post, refers to a user/project board
 type Reference interface {
 	ID() uint64
-	Language() proto.Language
+	Language() string
 }
 
 type userReferenceRelation interface {
@@ -72,33 +90,10 @@ type Lock interface {
 	userReferenceRelation
 }
 
-// The existingMessage interface represents a generic existing message
-type existingMessage interface {
-	igor.DBModel
-	Reference
-	Sender() *User
-	NumericSender() uint64
-	Reference() Reference
-	NumericReference() uint64
-	Text() string
-	IsEditable() bool
-	NumericOwners() []uint64
-	Owners() []*User
-	Revisions() []string
-	RevisionsNumber() uint8
-	VotesCount() int
-	Votes() *[]Vote
-}
-
-// editingMessage interface represents a message while is edited
-type editingMessage interface {
-	newMessage
-	existingMessage
-}
-
 // ExistingPost is the interface that wraps the methods common to every existing post
 type ExistingPost interface {
-	existingMessage
+	Content
+
 	Comments(CommentlistOptions) *[]ExistingComment
 	CommentsCount() uint8
 	NumericBookmarkers() []uint64
@@ -116,24 +111,7 @@ type ExistingPost interface {
 
 // ExistingComment is the interface that wraps the methods common to every existing comment
 type ExistingComment interface {
-	existingMessage
+	Content
+
 	Post() (ExistingPost, error)
-}
-
-// Helper functions
-
-// createMessage is an helper function. It's used to Init a new message structure
-func createMessage(message newMessage, sender, reference uint64, text string, language proto.Language) error {
-	message.ClearDefaults()
-	message.SetSender(sender)
-	message.SetReference(reference)
-	message.SetText(html.EscapeString(text))
-	message.SetLanguage(language)
-
-	return nil
-}
-
-// updateMessage is an helper function. It's used to update a message (requires an editingMessage)
-func updateMessage(message editingMessage) error {
-	return createMessage(message, message.NumericSender(), message.NumericReference(), message.Text(), message.Language())
 }

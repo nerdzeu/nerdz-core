@@ -21,8 +21,6 @@ import (
 	"net/mail"
 	"net/url"
 	"time"
-
-	"github.com/nerdzeu/nerdz-core/proto"
 )
 
 // PersonalInfo is the struct that contains all the personal info of an user
@@ -55,7 +53,7 @@ type ContactInfo struct {
 
 // BoardInfo is that struct that contains all the informations related to the user's board
 type BoardInfo struct {
-	Language   proto.Language
+	Language   string
 	IsClosed   bool
 	Private    bool
 	Whitelist  []*User

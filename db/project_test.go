@@ -25,9 +25,13 @@ import (
 )
 
 var prj *db.Project
-var err error
 
 func init() {
+	err := db.Init()
+	if err != nil {
+		panic(err)
+	}
+
 	prj, err = db.NewProject(1)
 	if err != nil {
 		panic(fmt.Sprintf("No error should happen when create existing user, but got: %+v", err))

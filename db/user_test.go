@@ -29,7 +29,10 @@ import (
 var me, other, blacklisted, withClosedProfile *db.User
 
 func init() {
-	var err error
+	err := db.Init()
+	if err != nil {
+		panic(err)
+	}
 
 	me, err = db.NewUser(1)
 	if err != nil {
@@ -202,12 +205,12 @@ func TestAddEditDeleteUserPost(t *testing.T) {
 
 	// New post on my board (To = 0)
 	post.Message = "All right"
-	if err := me.Add(&post); err != nil {
+	if err := me.Submit(&post); err != nil {
 		t.Fatalf("Add user post should work but, got: %v", err)
 	}
 
 	if post.Language() != me.Language() {
-		t.Fatalf("User language should have been used, but instead %v has", post.Language())
+		t.Fatalf("Post-User language mismatch: got %+v, expected %+v", post.Language(), me.Language())
 	}
 
 	if err := me.Delete(&post); err != nil {
@@ -217,7 +220,7 @@ func TestAddEditDeleteUserPost(t *testing.T) {
 	post.Message = "All right2"
 	post.Lang = "en"
 
-	if err := me.Add(&post); err != nil {
+	if err := me.Submit(&post); err != nil {
 		t.Fatalf("Add with ID should work but, got: %v", err)
 	}
 
@@ -254,7 +257,7 @@ func TestAddEditDeleteUserPostComment(t *testing.T) {
 	comment.Message = "Nice <html>"
 	comment.Hpid = existingPost.Hpid
 
-	if err := me.Add(&comment); err != nil {
+	if err := me.Submit(&comment); err != nil {
 		t.Fatalf("Add failed: %s", err)
 	}
 
@@ -284,7 +287,7 @@ func TestAddEditDeleteProjectPost(t *testing.T) {
 	post.Message = "BEST ADMIN EVER :>\nHello!"
 	post.Lang = "en"
 
-	if err := me.Add(&post); err != nil {
+	if err := me.Submit(&post); err != nil {
 		t.Fatalf("No errors should occur whie adding a post to a project of mine, but got: %v", err)
 	}
 
@@ -308,7 +311,7 @@ func TestAddEditDeleteProjectPostComment(t *testing.T) {
 	projectPostComment.Hpid = projectPost.Hpid
 	projectPostComment.Message = "lol k"
 
-	if err := me.Add(&projectPostComment); err != nil {
+	if err := me.Submit(&projectPostComment); err != nil {
 		t.Fatalf("Add comment on an existing project post sould work but failed with error: %s", err.Error())
 	}
 
@@ -325,12 +328,12 @@ func TestAddEditDeleteProjectPostComment(t *testing.T) {
 }
 
 func TestAddEditDeletePm(t *testing.T) {
-	var pm db.Pm
+	var pm db.PM
 
 	pm.Message = "Hi bro. Join telegram now"
 	pm.To = withClosedProfile.Counter
 
-	if err := me.Add(&pm); err != nil {
+	if err := me.Submit(&pm); err != nil {
 		t.Fatalf("No errors should occur while adding a new pm to a non blacklisted user, but got %v", err)
 	}
 
